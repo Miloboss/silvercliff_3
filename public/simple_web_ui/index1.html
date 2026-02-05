@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resort Landing (Mobile-first)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#111826;
+      --muted:#95a3b8;
+      --text:#e8eef9;
+      --line:rgba(255,255,255,.10);
+      --brand:#e11d48; /* rose */
+      --brand2:#f97316; /* orange */
+      --shadow: 0 16px 40px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background: radial-gradient(1200px 500px at 20% -10%, rgba(225,29,72,.25), transparent 60%),
+                  radial-gradient(900px 450px at 90% 0%, rgba(249,115,22,.18), transparent 55%),
+                  var(--bg);
+    }
+
+    a{color:inherit;text-decoration:none}
+    .container{
+      width:min(1100px, 92vw);
+      margin:0 auto;
+      padding-bottom:90px; /* space for sticky bar */
+    }
+
+    /* Top bar */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.55);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      width:min(1100px, 92vw);
+      margin:0 auto;
+      padding:12px 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800;
+      letter-spacing:.4px;
+    }
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      box-shadow: 0 10px 25px rgba(225,29,72,.22);
+    }
+    .pill{
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:7px;height:7px;border-radius:99px;background:#22c55e;
+      box-shadow:0 0 0 6px rgba(34,197,94,.12);
+    }
+
+    /* Hero */
+    .hero{
+      margin-top:18px;
+      border:1px solid var(--line);
+      border-radius: calc(var(--radius) + 6px);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.75)),
+        url("https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&q=80");
+      background-size: cover;
+      background-position:center;
+    }
+    .hero-inner{
+      padding:18px;
+      display:grid;
+      gap:14px;
+    }
+    .hero h1{
+      margin:0;
+      font-size: clamp(22px, 4.8vw, 40px);
+      line-height:1.08;
+      letter-spacing:.2px;
+    }
+    .hero p{
+      margin:0;
+      color:rgba(232,238,249,.82);
+      line-height:1.5;
+      max-width: 56ch;
+      font-size: 14px;
+    }
+    .badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:2px;
+    }
+    .badge{
+      font-size:12px;
+      padding:8px 10px;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:999px;
+      background: rgba(17,24,38,.45);
+      backdrop-filter: blur(6px);
+    }
+
+    .hero-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:6px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      border:1px solid var(--line);
+      padding:12px 14px;
+      border-radius: 14px;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      background: rgba(17,24,38,.60);
+      color: var(--text);
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.18)}
+    .btn:active{transform: translateY(0px)}
+    .btn.primary{
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      border: none;
+    }
+    .btn.ghost{
+      background: rgba(17,24,38,.25);
+    }
+    .icon{
+      width:18px;height:18px; display:inline-block;
+    }
+
+    /* Search / filters */
+    .filters{
+      margin:18px 0 10px;
+      display:grid;
+      gap:10px;
+    }
+    .field{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .input, .select{
+      flex:1;
+      min-width: 160px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(17,24,38,.35);
+      color: var(--text);
+      padding:12px 12px;
+      outline:none;
+    }
+    .input::placeholder{color: rgba(149,163,184,.8)}
+    .select{cursor:pointer}
+
+    /* Section */
+    .section-title{
+      margin: 16px 0 10px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .section-title h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.3px;
+    }
+    .section-title small{
+      color: var(--muted);
+    }
+
+    /* Cards grid (like screenshot) */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:12px;
+    }
+    @media (min-width: 760px){
+      .hero-inner{padding:24px}
+      .filters{grid-template-columns: 1fr auto}
+      .grid{grid-template-columns: repeat(3, minmax(0,1fr))}
+    }
+    @media (min-width: 1020px){
+      .grid{grid-template-columns: repeat(4, minmax(0,1fr))}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      overflow:hidden;
+      background: rgba(17,24,38,.55);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      transition: transform .16s ease, border-color .16s ease;
+      display:flex;
+      flex-direction:column;
+      min-height: 260px;
+    }
+    .card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.16);
+    }
+    .thumb{
+      position:relative;
+      aspect-ratio: 4 / 5;
+      background:#0f172a;
+      overflow:hidden;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      filter: saturate(1.05) contrast(1.02);
+      transform: scale(1.03);
+    }
+    .thumb::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,.75) 100%);
+    }
+    .tag{
+      position:absolute;
+      left:10px;
+      top:10px;
+      font-size:11px;
+      padding:7px 9px;
+      border-radius:999px;
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(6px);
+    }
+    .price{
+      position:absolute;
+      right:10px;
+      bottom:10px;
+      font-size:12px;
+      padding:7px 9px;
+      border-radius:999px;
+      background: rgba(17,24,38,.60);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(6px);
+    }
+
+    .card-body{
+      padding:12px 12px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      flex:1;
+    }
+    .code{
+      color: rgba(232,238,249,.75);
+      font-size:11px;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+    }
+    .title{
+      margin:0;
+      font-size: 14px;
+      line-height:1.25;
+      letter-spacing:.2px;
+    }
+    .desc{
+      margin:0;
+      color: rgba(149,163,184,.92);
+      font-size: 12.5px;
+      line-height:1.45;
+      display:-webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+    }
+    .card-actions{
+      margin-top:auto;
+      display:flex;
+      gap:8px;
+    }
+    .btn.small{
+      padding:10px 10px;
+      border-radius: 12px;
+      font-size:12px;
+      font-weight:800;
+      flex:1;
+    }
+    .btn.small.primary{box-shadow: 0 10px 25px rgba(225,29,72,.18)}
+
+    /* Sticky bottom bar (mobile) */
+    .sticky{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:50;
+      border-top:1px solid var(--line);
+      background: rgba(11,15,20,.70);
+      backdrop-filter: blur(10px);
+      padding:10px;
+    }
+    .sticky-inner{
+      width:min(1100px, 92vw);
+      margin:0 auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .sticky .mini{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 0;
+    }
+    .sticky .mini strong{
+      font-size:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sticky .mini span{
+      color: var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sticky .actions{
+      display:flex;
+      gap:8px;
+      flex-shrink:0;
+    }
+    .sticky .btn{
+      padding:11px 12px;
+      border-radius: 14px;
+      font-size:12px;
+      font-weight:900;
+    }
+    @media (min-width: 760px){
+      .sticky{display:none} /* desktop show header CTA instead */
+      .container{padding-bottom: 40px}
+    }
+
+    /* Modal */
+    .backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:16px;
+    }
+    .modal{
+      width:min(560px, 96vw);
+      border:1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(17,24,38,.92);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal-head{
+      padding:14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--line);
+    }
+    .modal-head strong{font-size:14px}
+    .x{
+      width:36px;height:36px;border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+    }
+    .modal-body{
+      padding:14px;
+      display:grid;
+      gap:10px;
+      color: rgba(232,238,249,.9);
+      font-size: 13px;
+      line-height:1.55;
+    }
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 420px){
+      .two{grid-template-columns: 1fr}
+    }
+    .hint{
+      color: var(--muted);
+      font-size:12px;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div style="font-size:13px;opacity:.9">Boss Resort</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">Mobile-first landing</div>
+        </div>
+      </div>
+
+      <div class="pill" title="Live availability demo">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Instant Booking • Line/WhatsApp</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" aria-label="Hero">
+      <div class="hero-inner">
+        <div>
+          <h1>Stay by the lake. Wake up in the jungle. 🌿</h1>
+          <p>
+            Inspired by tour-style layouts, but optimized for a resort: clear cards, quick booking,
+            and strong mobile CTAs.
+          </p>
+          <div class="badges" aria-label="Highlights">
+            <span class="badge">Free pickup</span>
+            <span class="badge">Breakfast included</span>
+            <span class="badge">Private villas</span>
+            <span class="badge">Best price guarantee</span>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <button class="btn primary" id="openBooking">
+            <svg class="icon" viewBox="0 0 24 24" fill="none">
+              <path d="M7 3v3M17 3v3M4 8h16M6 12h4M6 16h4M14 12h4M14 16h4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Check Availability
+          </button>
+          <a class="btn ghost" href="#packages">
+            <svg class="icon" viewBox="0 0 24 24" fill="none">
+              <path d="M12 6v12M6 12h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            View Packages
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="filters" aria-label="Filters">
+      <div class="field">
+        <input class="input" id="search" placeholder="Search (villa, lake, honeymoon...)" />
+        <select class="select" id="type">
+          <option value="all">All types</option>
+          <option value="villa">Villa</option>
+          <option value="room">Room</option>
+          <option value="package">Package</option>
+        </select>
+        <select class="select" id="sort">
+          <option value="popular">Sort: Popular</option>
+          <option value="priceAsc">Sort: Price (low → high)</option>
+          <option value="priceDesc">Sort: Price (high → low)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;justify-content:space-between">
+        <div class="hint" id="countHint">Showing 0</div>
+        <button class="btn" id="resetBtn" style="padding:11px 12px;border-radius:14px;font-size:12px;font-weight:900;">
+          Reset
+        </button>
+      </div>
+    </section>
+
+    <div class="section-title" id="packages">
+      <h2>Featured stays & packages</h2>
+      <small>mobile 2-col → tablet 3-col → desktop 4-col</small>
+    </div>
+
+    <section class="grid" id="grid" aria-label="Cards grid"></section>
+  </main>
+
+  <!-- Sticky bottom bar (mobile) -->
+  <div class="sticky" role="region" aria-label="Quick actions">
+    <div class="sticky-inner">
+      <div class="mini">
+        <strong>Boss Resort</strong>
+        <span>Tap to book • fast reply</span>
+      </div>
+      <div class="actions">
+        <button class="btn" id="chatBtn">Chat</button>
+        <button class="btn primary" id="bookBtn">Book</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="backdrop" id="backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <strong id="modalTitle">Booking / Inquiry</strong>
+        <button class="x" id="closeModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="two">
+          <input class="input" placeholder="Name" />
+          <input class="input" placeholder="Phone (Line/WhatsApp)" />
+        </div>
+        <div class="two">
+          <input class="input" placeholder="Check-in date (e.g. 2026-02-10)" />
+          <input class="input" placeholder="Nights (e.g. 2)" />
+        </div>
+        <textarea class="input" rows="3" placeholder="Message (villa type, number of guests, etc.)"></textarea>
+
+        <button class="btn primary" id="sendFake">
+          Send Inquiry
+        </button>
+        <div class="hint">Demo only — connect this to your backend / WhatsApp / Line later.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const data = [
+      {
+        code: "BR-V1",
+        type: "villa",
+        title: "Lake View Villa",
+        desc: "Private villa with lake sunrise view, balcony, and breakfast included.",
+        price: 4200,
+        img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+        popular: 10
+      },
+      {
+        code: "BR-R2",
+        type: "room",
+        title: "Forest Room",
+        desc: "Cozy room surrounded by greenery. Perfect for quiet stays.",
+        price: 1800,
+        img: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        popular: 7
+      },
+      {
+        code: "BR-P2D1N",
+        type: "package",
+        title: "2 Days 1 Night (Boat + Stay)",
+        desc: "Boat tour + floating dinner vibe + one-night stay. Great for couples.",
+        price: 2900,
+        img: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80",
+        popular: 9
+      },
+      {
+        code: "BR-VH",
+        type: "villa",
+        title: "Honeymoon Villa",
+        desc: "Romantic setup, bathtub, and private deck. Upgrade decor on request.",
+        price: 5200,
+        img: "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80",
+        popular: 8
+      },
+      {
+        code: "BR-P3D2N",
+        type: "package",
+        title: "3 Days 2 Nights (Jungle + Lake)",
+        desc: "Jungle walk + lake day + 2 nights stay. Balanced adventure & relax.",
+        price: 4500,
+        img: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+        popular: 6
+      },
+      {
+        code: "BR-R1",
+        type: "room",
+        title: "Budget Room",
+        desc: "Simple, clean, comfortable. Best for quick stopovers.",
+        price: 1200,
+        img: "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=80",
+        popular: 5
+      },
+      {
+        code: "BR-PDAY",
+        type: "package",
+        title: "Day Pass (Pool + Cafe)",
+        desc: "Use the pool + cafe credit included. Great for locals/weekend.",
+        price: 499,
+        img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80",
+        popular: 4
+      },
+      {
+        code: "BR-V2",
+        type: "villa",
+        title: "Family Villa",
+        desc: "Extra space for family, sofa bed, and wide terrace.",
+        price: 4600,
+        img: "https://images.unsplash.com/photo-1501117716987-c8e1ecb210ff?auto=format&fit=crop&w=1200&q=80",
+        popular: 7
+      }
+    ];
+
+    const $ = (s) => document.querySelector(s);
+
+    const grid = $("#grid");
+    const search = $("#search");
+    const type = $("#type");
+    const sort = $("#sort");
+    const countHint = $("#countHint");
+
+    function money(n){
+      return new Intl.NumberFormat("th-TH").format(n);
+    }
+
+    function render(list){
+      grid.innerHTML = list.map(item => `
+        <article class="card" data-type="${item.type}" data-title="${item.title.toLowerCase()}">
+          <div class="thumb">
+            <img src="${item.img}" alt="${item.title}">
+            <div class="tag">${item.type.toUpperCase()}</div>
+            <div class="price">THB ${money(item.price)}</div>
+          </div>
+          <div class="card-body">
+            <div class="code">${item.code}</div>
+            <h3 class="title">${item.title}</h3>
+            <p class="desc">${item.desc}</p>
+            <div class="card-actions">
+              <button class="btn small" data-action="details" data-code="${item.code}">Details</button>
+              <button class="btn small primary" data-action="book" data-code="${item.code}">Book</button>
+            </div>
+          </div>
+        </article>
+      `).join("");
+
+      countHint.textContent = `Showing ${list.length} item(s)`;
+    }
+
+    function apply(){
+      const q = search.value.trim().toLowerCase();
+      const t = type.value;
+      const s = sort.value;
+
+      let list = [...data];
+
+      if (t !== "all") list = list.filter(x => x.type === t);
+      if (q) {
+        list = list.filter(x =>
+          x.title.toLowerCase().includes(q) ||
+          x.desc.toLowerCase().includes(q) ||
+          x.code.toLowerCase().includes(q)
+        );
+      }
+
+      if (s === "priceAsc") list.sort((a,b)=>a.price-b.price);
+      if (s === "priceDesc") list.sort((a,b)=>b.price-a.price);
+      if (s === "popular") list.sort((a,b)=>b.popular-a.popular);
+
+      render(list);
+    }
+
+    // Modal helpers
+    const backdrop = $("#backdrop");
+    const openBooking = $("#openBooking");
+    const closeModal = $("#closeModal");
+    const chatBtn = $("#chatBtn");
+    const bookBtn = $("#bookBtn");
+    const sendFake = $("#sendFake");
+
+    function openModal(title="Booking / Inquiry"){
+      $("#modalTitle").textContent = title;
+      backdrop.style.display = "flex";
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+    function close(){
+      backdrop.style.display = "none";
+      backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    openBooking.addEventListener("click", ()=>openModal("Check Availability"));
+    closeModal.addEventListener("click", close);
+    backdrop.addEventListener("click", (e)=>{ if(e.target === backdrop) close(); });
+    document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") close(); });
+
+    chatBtn.addEventListener("click", ()=>openModal("Chat (Line/WhatsApp)"));
+    bookBtn.addEventListener("click", ()=>openModal("Quick Booking"));
+
+    sendFake.addEventListener("click", ()=>{
+      alert("✅ Sent! (demo) Connect this button to your API / WhatsApp / Line.");
+      close();
+    });
+
+    // Card button actions (event delegation)
+    grid.addEventListener("click", (e)=>{
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      const action = btn.dataset.action;
+      const code = btn.dataset.code;
+      const item = data.find(x => x.code === code);
+      if(!item) return;
+
+      if(action === "details"){
+        openModal("Details: " + item.title);
+      }
+      if(action === "book"){
+        openModal("Book: " + item.title);
+      }
+    });
+
+    // Filters
+    [search, type, sort].forEach(el => el.addEventListener("input", apply));
+    $("#resetBtn").addEventListener("click", ()=>{
+      search.value = "";
+      type.value = "all";
+      sort.value = "popular";
+      apply();
+    });
+
+    // initial
+    apply();
+  </script>
+</body>
+</html>
