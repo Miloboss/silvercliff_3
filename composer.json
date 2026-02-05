@@ -1,9 +1,3 @@
-"require": {
-  "php": ">=8.4",
-  "ext-intl": "*",
-  "ext-zip": "*"
-}
-
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
