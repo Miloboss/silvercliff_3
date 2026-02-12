@@ -6,6 +6,8 @@
                 <x-filament::button wire:click="setTomorrow" size="sm" color="gray">Tomorrow</x-filament::button>
                 <x-filament::button wire:click="setThisWeek" size="sm" color="gray">This Week</x-filament::button>
                 <x-filament::button wire:click="setThisMonth" size="sm" color="gray">This Month</x-filament::button>
+                <x-filament::button wire:click="setLastMonth" size="sm" color="gray">Last Month</x-filament::button>
+                <x-filament::button wire:click="setThisYear" size="sm" color="gray">This Year</x-filament::button>
             </div>
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2">

@@ -19,6 +19,11 @@ class PackageResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -48,7 +53,8 @@ class PackageResource extends Resource
                     ->required(),
                 Forms\Components\FileUpload::make('image_path')
                     ->image()
-                    ->directory('packages'),
+                    ->directory('packages')
+                    ->maxSize(20480),
             ]);
     }
 

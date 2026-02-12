@@ -11,6 +11,6 @@ class ActivityController extends Controller
 {
     public function index()
     {
-        return response()->json(Activity::where('is_active', true)->get());
+        return response()->json(Activity::with('images')->where('is_active', true)->get());
     }
 }

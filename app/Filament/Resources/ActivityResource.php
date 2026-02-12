@@ -19,12 +19,23 @@ class ActivityResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-sparkles';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin', 'content_manager']) ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('title')
                     ->required(),
+                Forms\Components\FileUpload::make('cover_image')
+                    ->image()
+                    ->directory('activities/covers')
+                    ->maxSize(20480)
+                    ->nullable()
+                    ->dehydrated(fn ($state) => filled($state)),
                 Forms\Components\Textarea::make('description')
                     ->required()
                     ->columnSpanFull(),
@@ -42,6 +53,7 @@ class ActivityResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('cover_image'),
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price_thb')
@@ -74,7 +86,7 @@ class ActivityResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ImagesRelationManager::class,
         ];
     }
 

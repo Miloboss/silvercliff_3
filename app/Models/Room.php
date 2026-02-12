@@ -13,6 +13,7 @@ class Room extends Model
         'sort_order',
         'is_active',
         'notes',
+        'price_per_night_thb',
     ];
 
     public function assignments(): HasMany

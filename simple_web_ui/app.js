@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const packageSelect = document.getElementById("packageSelect");
   const packageGrid = document.getElementById("packageGrid");
+  const productGrid = document.getElementById("productGrid");
   const activitiesGrid = document.getElementById("activitiesGrid");
   const galleryGrid = document.getElementById("galleryGrid");
 
@@ -171,11 +172,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== API Loading (If elements exist) =====
-  if (packageGrid || activitiesGrid || galleryGrid) {
+  if (packageGrid || activitiesGrid || galleryGrid || productGrid) {
     loadSettings();
-    loadPackages();
-    loadActivities();
-    loadGallery();
+    // Subsequent loads (loadPackages, loadActivities, etc.) are triggered from inside loadSettings()
   }
 
   // Category filters setup
@@ -194,31 +193,177 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ===== GLOBAL HELPERS & API LOGIC =====
 let currentPackages = [];
-let currentGallery = [];
+let currentGallery = []; // This stores Albums with nested images
 let currentActivities = [];
-const ACTIVITIES_LIMIT = 6;
-const GALLERY_LIMIT = 12;
+let siteSettings = {};
 
 async function loadSettings() {
   try {
     const res = await fetch('/api/settings');
     const data = await res.json();
-    if (data.tagline) {
-      const taglineEl = document.getElementById('heroTagline');
-      if (taglineEl) taglineEl.textContent = data.tagline;
+    siteSettings = data;
+
+    // 1) BRANDING BINDING
+    const branding = data.branding || {};
+    if (branding.site_name) {
+      ['siteName', 'siteNameMobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = branding.site_name;
+      });
+      const titleEl = document.getElementById('siteTitle');
+      if (titleEl) titleEl.textContent = `${branding.site_name} — ${branding.tagline || ''}`;
     }
-    if (data.hero_text) {
-      const titleEl = document.getElementById('heroTitle');
-      if (titleEl) titleEl.innerHTML = data.hero_text;
+    if (branding.tagline) {
+      ['siteTagline', 'siteTaglineMobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = branding.tagline;
+      });
     }
-    const waNum = data.whatsapp_number || '';
-    const cleanWa = waNum.replace(/\D/g, '');
-    const waEl = document.getElementById('quickWhatsapp');
-    if (waEl) waEl.textContent = waNum;
-    const emailEl = document.getElementById('quickEmail');
-    if (emailEl) emailEl.textContent = data.email || '';
-    const locEl = document.getElementById('quickLocation');
-    if (locEl) locEl.textContent = data.map_location || '';
+
+    // Logo Binding
+    const logoSrc = branding.logo_url || './logo.png';
+    document.querySelectorAll('.brand-img').forEach(img => {
+      img.src = logoSrc;
+      img.onerror = function () {
+        this.onerror = null;
+        this.src = './logo.png';
+      };
+    });
+
+    if (branding.favicon_url) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = branding.favicon_url;
+    }
+
+    // 2) CONTACT BINDING (Dynamic via data-setting)
+    const contact = data.contact || {};
+
+    // Bind text content
+    document.querySelectorAll('[data-setting]').forEach(el => {
+      const key = el.dataset.setting;
+      if (contact[key]) {
+        el.textContent = contact[key];
+      }
+    });
+
+    // Bind links (tel:, mailto:, etc)
+    document.querySelectorAll('[data-setting-link]').forEach(el => {
+      const key = el.dataset.settingLink;
+      if (contact[key]) {
+        if (key === 'phone' || key === 'whatsapp') {
+          el.href = `tel:${contact[key].replace(/\D/g, '')}`;
+        } else if (key === 'email') {
+          el.href = `mailto:${contact[key]}`;
+        } else {
+          el.href = contact[key];
+        }
+      }
+    });
+
+    // Social Links
+    if (contact.facebook) {
+      const el = document.getElementById('fbLink');
+      if (el) { el.href = contact.facebook; el.classList.remove('d-none'); }
+    }
+    if (contact.instagram) {
+      const el = document.getElementById('igLink');
+      if (el) { el.href = contact.instagram; el.classList.remove('d-none'); }
+    }
+
+    // Map Iframe
+    if (contact.map_url) {
+      const map = document.getElementById('contactMap');
+      const container = document.getElementById('mapContainer');
+      if (map && container) {
+        map.src = contact.map_url;
+        container.style.display = 'block';
+      }
+    }
+
+    // 3) HERO BINDING
+    const hero = data.hero || {};
+    if (hero.title) {
+      const el = document.getElementById('heroTitle');
+      if (el) el.innerHTML = hero.title;
+    }
+    if (hero.tagline) {
+      const el = document.getElementById('heroTagline');
+      if (el) el.textContent = hero.tagline;
+    }
+    if (hero.cta_text) {
+      const el = document.getElementById('heroCtaText');
+      if (el) el.textContent = hero.cta_text;
+    }
+    if (hero.bg_url) {
+      const video = document.querySelector('.hero-video-bg video');
+      if (video) {
+        const source = video.querySelector('source');
+        if (source) {
+          source.src = hero.bg_url;
+          video.load();
+        }
+      }
+    }
+
+    // 4) INTRO BINDING
+    const intro = data.intro || {};
+    if (intro.title) {
+      const el = document.getElementById('introTitle');
+      if (el) el.textContent = intro.title;
+    }
+    if (intro.text) {
+      const el = document.getElementById('introText');
+      if (el) el.textContent = intro.text;
+    }
+
+    // 5) ACTIVITIES BINDING
+    const act = data.activities || {};
+    if (act.title) {
+      const el = document.getElementById('activitiesTitle');
+      if (el) el.textContent = act.title;
+    }
+    if (act.subtitle) {
+      const el = document.getElementById('activitiesSubtitle');
+      if (el) el.textContent = act.subtitle;
+    }
+
+    // 6) PACKAGES BINDING
+    const pkg = data.packages || {};
+    if (pkg.title) {
+      const el = document.getElementById('packagesTitle');
+      if (el) el.textContent = pkg.title;
+    }
+    if (pkg.subtitle) {
+      const el = document.getElementById('packagesSubtitle');
+      if (el) el.textContent = pkg.subtitle;
+    }
+
+    // 7) GALLERY BINDING
+    const gal = data.gallery || {};
+    if (gal.title) {
+      const el = document.getElementById('galleryTitle');
+      if (el) el.textContent = gal.title;
+    }
+    if (gal.subtitle) {
+      const el = document.getElementById('gallerySubtitle');
+      if (el) el.textContent = gal.subtitle;
+    }
+    if (gal.cta) {
+      const el = document.getElementById('galleryCtaText');
+      if (el) el.textContent = gal.cta;
+    }
+
+    // Trigger dependent loads with new limits
+    loadActivities();
+    loadGallery();
+    loadPackages();
+    loadRooms();
+
   } catch (err) { console.error("Failed to load settings", err); }
 }
 
@@ -228,7 +373,9 @@ async function loadPackages() {
     const data = await res.json();
     currentPackages = data;
     const packageGrid = document.getElementById("packageGrid");
-    if (packageGrid) packageGrid.innerHTML = data.map(packageCard).join("");
+    if (packageGrid) {
+      packageGrid.innerHTML = data.map(packageCard).join("");
+    }
     const packageSelect = document.getElementById("packageSelect");
     if (packageSelect) {
       packageSelect.innerHTML = '<option value="" disabled selected>Select a package</option>';
@@ -241,6 +388,31 @@ async function loadPackages() {
   } catch (err) { console.error("Failed to load packages", err); }
 }
 
+async function loadRooms() {
+  try {
+    const res = await fetch('/api/rooms');
+    const data = await res.json();
+    const productGrid = document.getElementById("productGrid");
+    if (!productGrid) return;
+
+    // Group rooms by zone to show zones as products
+    const zones = [...new Set(data.map(r => r.zone))];
+    productGrid.innerHTML = zones.map(zone => {
+      const count = data.filter(r => r.zone === zone).length;
+      return `
+            <div class="col-12 col-md-6 col-lg-3">
+              <div class="glass-card p-4 text-center h-100 reveal" data-aos="fade-up">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏡</div>
+                <h3 class="h5 fw-bold">Zone ${zone}</h3>
+                <p class="text-muted-soft small mb-3">${count} Bungalows available</p>
+                <a href="booking.html?type=room" class="btn btn-mini btn-outline-light w-100 mt-auto">Book Room</a>
+              </div>
+            </div>
+         `;
+    }).join("");
+  } catch (err) { console.error("Failed to load rooms", err); }
+}
+
 async function loadActivities() {
   try {
     const res = await fetch('/api/activities');
@@ -248,9 +420,9 @@ async function loadActivities() {
     currentActivities = data;
     const grid = document.getElementById("activitiesGrid");
     if (grid) {
-      // If on index page (has carousel nav), limit and init carousel
       const isIndex = !!document.getElementById('actNext');
-      const displayedItems = isIndex ? data.slice(0, ACTIVITIES_LIMIT) : data;
+      const limit = parseInt(siteSettings?.activities?.limit || 6);
+      const displayedItems = isIndex ? data.slice(0, limit) : data;
       grid.innerHTML = displayedItems.map(activityCard).join("");
       if (isIndex) initActivitiesCarousel();
     }
@@ -261,7 +433,7 @@ async function loadGallery() {
   try {
     const res = await fetch('/api/gallery');
     const data = await res.json();
-    currentGallery = data;
+    currentGallery = data; // Now stores Albums
     renderGallery('all');
   } catch (err) { console.error("Failed to load gallery", err); }
 }
@@ -270,15 +442,27 @@ function renderGallery(filter = 'all') {
   const grid = document.getElementById("galleryGrid");
   if (!grid) return;
 
-  let filtered = filter === 'all' ? currentGallery : currentGallery.filter(i => i.category.toLowerCase() === filter.toLowerCase());
+  let allImages = [];
+  currentGallery.forEach(album => {
+    // Exact category match or 'all'
+    if (filter === 'all' || album.category.toLowerCase() === filter.toLowerCase()) {
+      (album.images || []).forEach(img => {
+        allImages.push({
+          image_url: img.image_url,
+          album_title: album.title,
+          category: album.category
+        });
+      });
+    }
+  });
 
-  // If on home page (detected by View More button existence), limit items
-  const isHome = !!document.querySelector('.view-more-wrap');
+  const isHome = !!document.querySelector('.home-gallery');
   if (isHome) {
-    filtered = filtered.slice(0, GALLERY_LIMIT);
+    const limit = parseInt(siteSettings?.gallery?.limit || 6);
+    allImages = allImages.slice(0, limit);
   }
 
-  grid.innerHTML = filtered.map(galleryItem).join("");
+  grid.innerHTML = allImages.map(galleryItem).join("");
   if (typeof GLightbox !== 'undefined') GLightbox({ selector: ".glightbox" });
 }
 
@@ -294,7 +478,7 @@ function initActivitiesCarousel() {
   if (cards.length === 0) return;
 
   const updateCarousel = () => {
-    const cardWidth = cards[0].offsetWidth + 16; // width + gap
+    const cardWidth = (cards[0].offsetWidth || 300) + 16;
     const visibleCards = getVisibleCardsCount();
     const maxIndex = Math.max(0, cards.length - visibleCards);
 
@@ -338,16 +522,14 @@ function initActivitiesCarousel() {
 
   function handleSwipe() {
     const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 50) { // threshold
+    if (Math.abs(diff) > 50) {
       if (diff > 0) {
-        // swipe left -> next
         const visibleCards = getVisibleCardsCount();
         if (actCurrentIndex < cards.length - visibleCards) {
           actCurrentIndex++;
           updateCarousel();
         }
       } else {
-        // swipe right -> prev
         if (actCurrentIndex > 0) {
           actCurrentIndex--;
           updateCarousel();
@@ -361,23 +543,22 @@ function initActivitiesCarousel() {
 }
 
 function packageCard(p) {
-  const imgUrl = p.image_path ? `/storage/${p.image_path}` : 'https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80';
+  const imgUrl = p.image_url || 'https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80';
   const badge = p.is_best_offer ? 'BEST OFFER' : 'HOT';
   return `
     <div class="col-12 col-lg-4">
-      <div class="img-card">
-        <img src="${imgUrl}" alt="${p.title}">
-        <div class="img-overlay">
+      <div class="img-card h-100 flex-column overflow-hidden">
+        <img src="${imgUrl}" alt="${p.title}" style="height: 240px; object-fit: cover;">
+        <div class="img-overlay" style="bottom: auto; top: 0;">
           <div class="img-overlay-title">${badge} • THB ${new Intl.NumberFormat().format(p.price_thb)}</div>
-          <div class="img-overlay-sub">${p.title}</div>
         </div>
-      </div>
-      <div class="glass-card p-3 mt-2">
-        <div class="fw-bold">${p.title}</div>
-        <div class="text-muted-soft small mt-1">${p.subtitle || p.description.substring(0, 100) + '...'}</div>
-        <div class="d-flex gap-2 mt-3 flex-wrap">
-          <button class="btn btn-danger fw-bold" onclick="goToBookingPage({ package_id: '${p.id}', adults: 2, children: 0 })">Reserve</button>
-          <a class="btn btn-outline-light fw-bold" href="#gallery">See Photos</a>
+        <div class="glass-card p-3 mt-auto" style="border-radius: 0; border: none; background: rgba(255,255,255,0.02);">
+            <div class="fw-bold">${p.title}</div>
+            <div class="text-muted-soft small mt-1">${p.subtitle || (p.description ? p.description.substring(0, 80) + '...' : '')}</div>
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <button class="btn btn-danger fw-bold" onclick="goToBookingPage({ package_id: '${p.id}', adults: 2, children: 0 })">Reserve</button>
+              <a class="btn btn-outline-light fw-bold" href="#gallery">Photos</a>
+            </div>
         </div>
       </div>
     </div>
@@ -385,10 +566,12 @@ function packageCard(p) {
 }
 
 function activityCard(a) {
+  const imgUrl = a.cover_image_url || '';
+  const mediaContent = imgUrl ? `<img src="${imgUrl}" alt="${a.title}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 3rem;">🌴</div>';
   return `
     <article class="cardx">
-      <div class="cardx-media" style="height: 200px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05);">
-        <div style="font-size: 3rem;">🌴</div>
+      <div class="cardx-media" style="height: 200px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); overflow: hidden;">
+        ${mediaContent}
         <div class="cardx-tag">TOUR</div>
         ${a.price_thb ? `<div class="cardx-price">THB ${new Intl.NumberFormat().format(a.price_thb)}</div>` : ''}
       </div>
@@ -397,18 +580,29 @@ function activityCard(a) {
         <h3 class="cardx-title">${a.title}</h3>
         <p class="cardx-desc" style="font-size: 0.85rem; color: var(--muted);">${a.description}</p>
         <div class="cardx-actions">
-          <button class="btn btn-danger btn-mini w-100" onclick="goToBookingPage({ booking_type: 'tour', activity_id: '${a.id}' })">Book</button>
+          <button class="btn btn-danger btn-mini w-100" onclick="goToBookingPage({ booking_type: 'tour', activity_id: '${a.id}' })">${siteSettings?.activities?.cta || 'Book'}</button>
         </div>
       </div>
     </article>
   `;
 }
 
-function galleryItem(item, i) {
-  const imgUrl = `/storage/${item.image_path}`;
+function galleryItem(item) {
+  const imgUrl = item.image_url;
   return `
     <a class="g-item glightbox" href="${imgUrl}" data-gallery="resort">
-      <img src="${imgUrl}" alt="Gallery Image">
+      <img src="${imgUrl}" alt="Gallery Image" loading="lazy">
+      <div class="g-item-overlay">
+          <div class="g-item-info">
+            <span class="g-item-category">${item.category || 'RESORT'}</span>
+            <h3 class="g-item-title">${item.album_title}</h3>
+          </div>
+          <div class="g-item-cta">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+          </div>
+      </div>
     </a>
   `;
 }

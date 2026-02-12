@@ -19,24 +19,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Admin User
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@silvercliff.com',
-            'password' => bcrypt('password'),
-        ]);
+        // Roles
+        $this->call(RoleSeeder::class);
 
         // Site Settings
         $settings = [
+            'site_name' => 'SILVER CLIFF RESORT',
+            'site_tagline' => 'THE REAL JUNGLE EXPERIENCE',
+            'site_logo' => 'images/logo.png',
             'tagline' => 'THE REAL JUNGLE EXPERIENCE',
-            'hero_text' => 'Experience the serenity of Silver Cliff Resort',
-            'whatsapp_number' => '+66123456789',
-            'email' => 'info@silvercliffresort.com',
-            'map_location' => 'Khao Sok National Park, Thailand',
+            'hero_text' => 'Wander into the heart<br />of the rainforest.',
+            'whatsapp_number' => '+66 84 845 3550',
+            'email' => 'silvercliff_resort@hotmail.com',
+            'map_location' => 'Khao Sok, Surat Thani, Thailand',
+            'intro_title' => 'Thailand’s natural wonder experience',
+            'intro_text' => 'Silver Cliff Resort offers an authentic jungle experience surrounded by ancient limestone cliffs and lush rainforest.',
+            'amenities' => 'Breakfast included, Free Wi-Fi, Tour Desk, Jungle Restaurant, On-site Parking',
+            'policies' => 'Check-in: 14:00, Check-out: 11:00, ID Required, Cash / Wise / Bank Transfer',
+            'admin_notifications_email' => 'admin@silvercliffresort.com',
         ];
 
         foreach ($settings as $key => $value) {
-            \App\Models\SiteSetting::create(['key' => $key, 'value' => $value]);
+            \App\Models\SiteSetting::updateOrCreate(['key' => $key], ['value' => $value]);
         }
 
         // Activities

@@ -13,14 +13,38 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 
+use Illuminate\Database\Eloquent\Model;
+
 class BookingResource extends Resource
 {
     protected static ?string $model = Booking::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin', 'staff']) ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin', 'staff']) ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
+    }
+
     public static function form(Form $form): Form
     {
+        $isStaff = auth()->user()?->hasRole('staff') && !auth()->user()?->hasAnyRole(['super_admin', 'admin']);
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Core Information')
@@ -36,7 +60,8 @@ class BookingResource extends Resource
                                 'package' => 'Package Booking',
                             ])
                             ->required()
-                            ->reactive(),
+                            ->reactive()
+                            ->disabled($isStaff),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
@@ -45,22 +70,25 @@ class BookingResource extends Resource
                             ])
                             ->required()
                             ->default('pending'),
-                        Forms\Components\Select::make('source')
-                            ->options([
-                                'website' => 'Website',
-                                'bookingcom' => 'Booking.com',
-                                'walkin' => 'Walk-in',
-                            ])
-                            ->required()
-                            ->default('website'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Financial Info (Reporting Only)')
+                    ->schema([
+                        Forms\Components\TextInput::make('total_amount')
+                            ->numeric()
+                            ->prefix('THB')
+                            ->readOnly()
+                            ->helperText('Calculation handle on server. This is expected revenue.'),
+                    ]),
+                
+                // Detail Sections
 
                 Forms\Components\Section::make('Guest Details')
                     ->schema([
-                        Forms\Components\TextInput::make('full_name')->required(),
-                        Forms\Components\TextInput::make('whatsapp')->required()->tel(),
-                        Forms\Components\TextInput::make('email')->email(),
-                        Forms\Components\Textarea::make('notes')->columnSpanFull(),
+                        Forms\Components\TextInput::make('full_name')->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('whatsapp')->required()->tel()->disabled($isStaff),
+                        Forms\Components\TextInput::make('email')->email()->disabled($isStaff),
+                        Forms\Components\Textarea::make('notes')->columnSpanFull()->disabled($isStaff),
                     ])->columns(2),
 
                 // Detail Sections
@@ -68,10 +96,10 @@ class BookingResource extends Resource
                     ->relationship('roomDetail')
                     ->visible(fn (callable $get) => $get('booking_type') === 'room')
                     ->schema([
-                        Forms\Components\DatePicker::make('check_in')->required(),
-                        Forms\Components\DatePicker::make('check_out')->required(),
-                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required(),
-                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required(),
+                        Forms\Components\DatePicker::make('check_in')->required()->disabled($isStaff),
+                        Forms\Components\DatePicker::make('check_out')->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required()->disabled($isStaff),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Tour Details')
@@ -80,11 +108,12 @@ class BookingResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('activity_id')
                             ->relationship('activity', 'title')
-                            ->required(),
-                        Forms\Components\DatePicker::make('tour_date')->required(),
-                        Forms\Components\TimePicker::make('tour_time'),
-                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required(),
-                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required(),
+                            ->required()
+                            ->disabled($isStaff),
+                        Forms\Components\DatePicker::make('tour_date')->required()->disabled($isStaff),
+                        Forms\Components\TimePicker::make('tour_time')->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required()->disabled($isStaff),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Package Details')
@@ -93,11 +122,12 @@ class BookingResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('package_id')
                             ->relationship('package', 'title')
-                            ->required(),
-                        Forms\Components\DatePicker::make('check_in')->required(),
-                        Forms\Components\DatePicker::make('check_out')->required(),
-                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required(),
-                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required(),
+                            ->required()
+                            ->disabled($isStaff),
+                        Forms\Components\DatePicker::make('check_in')->required()->disabled($isStaff),
+                        Forms\Components\DatePicker::make('check_out')->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required()->disabled($isStaff),
                     ])->columns(2),
             ]);
     }
@@ -156,6 +186,11 @@ class BookingResource extends Resource
                     ->badge()
                     ->color('info')
                     ->placeholder('None'),
+                
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->money('THB')
+                    ->sortable()
+                    ->summarize(Tables\Columns\Summarizers\Sum::make()->money('THB')),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -200,8 +235,28 @@ class BookingResource extends Resource
                         'confirmed' => 'Confirmed',
                         'cancelled' => 'Cancelled',
                     ]),
+                Tables\Filters\TernaryFilter::make('staying')
+                    ->label('Staying Now')
+                    ->placeholder('All bookings')
+                    ->trueLabel('Staying guests')
+                    ->falseLabel('Not staying')
+                    ->queries(
+                        true: fn (Builder $query) => $query->where('status', 'confirmed')
+                            ->where(function ($q) {
+                                $today = now()->toDateString();
+                                $q->whereHas('roomDetail', fn($sq) => $sq->where('check_in', '<=', $today)->where('check_out', '>', $today))
+                                  ->orWhereHas('packageDetail', fn($sq) => $sq->where('check_in', '<=', $today)->where('check_out', '>', $today));
+                            }),
+                        false: fn (Builder $query) => $query,
+                    ),
             ])
             ->actions([
+                Tables\Actions\Action::make('downloadVoucher')
+                    ->label('Download Voucher')
+                    ->color('success')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->url(fn (Booking $record): string => route('bookings.download-voucher', $record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\Action::make('confirm')
                     ->label('Confirm')
                     ->color('success')
@@ -214,7 +269,9 @@ class BookingResource extends Resource
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->hidden(fn (Booking $record) => $record->status === 'cancelled')
-                    ->action(fn (Booking $record) => $record->update(['status' => 'cancelled']))
+                    ->action(fn (Booking $record) => $record->update([
+                        'status' => 'cancelled',
+                    ]))
                     ->requiresConfirmation(),
                 Tables\Actions\EditAction::make(),
             ])

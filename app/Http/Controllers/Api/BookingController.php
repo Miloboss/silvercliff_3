@@ -33,6 +33,7 @@ class BookingController extends Controller
                 'source' => 'website',
             ]);
 
+            $price = 0;
             if ($request->booking_type === 'room') {
                 $validated = $request->validate([
                     'check_in' => 'required|date',
@@ -47,6 +48,15 @@ class BookingController extends Controller
                     'guests_adults' => $validated['adults'],
                     'guests_children' => $validated['children'],
                 ]);
+
+                // Calculate nights
+                $start = new \DateTime($validated['check_in']);
+                $end = new \DateTime($validated['check_out']);
+                $nights = $start->diff($end)->days;
+                
+                // Get default room price (or first available)
+                $roomPrice = \App\Models\Room::where('is_active', true)->first()?->price_per_night_thb ?? 1500;
+                $price = $nights * $roomPrice;
             } 
             elseif ($request->booking_type === 'tour') {
                 $validated = $request->validate([
@@ -57,6 +67,9 @@ class BookingController extends Controller
                     'children' => 'required|integer|min:0',
                 ]);
 
+                $activity = Activity::find($validated['activity_id']);
+                $price = $activity->price_thb;
+
                 $booking->tourDetail()->create([
                     'activity_id' => $validated['activity_id'],
                     'tour_date' => $validated['tour_date'],
@@ -66,7 +79,6 @@ class BookingController extends Controller
                 ]);
 
                 // Auto-generate schedule
-                $activity = Activity::find($validated['activity_id']);
                 $booking->scheduleItems()->create([
                     'title' => $activity->title,
                     'scheduled_date' => $validated['tour_date'],
@@ -84,6 +96,9 @@ class BookingController extends Controller
                     'children' => 'required|integer|min:0',
                 ]);
 
+                $package = Package::with('itineraries')->find($validated['package_id']);
+                $price = $package->price_thb;
+
                 $booking->packageDetail()->create([
                     'package_id' => $validated['package_id'],
                     'check_in' => $validated['check_in'],
@@ -93,7 +108,6 @@ class BookingController extends Controller
                 ]);
 
                 // Auto-generate schedule from itineraries
-                $package = Package::with('itineraries')->find($validated['package_id']);
                 foreach ($package->itineraries as $itinerary) {
                     $dayOffset = $itinerary->day_no - 1;
                     $date = date('Y-m-d', strtotime($validated['check_in'] . " + $dayOffset days"));
@@ -107,10 +121,19 @@ class BookingController extends Controller
                 }
             }
 
+            // Update booking with calculated prices
+            $booking->update([
+                'subtotal' => $price,
+                'total_amount' => $price,
+                'payment_status' => 'unpaid',
+            ]);
+
             return response()->json([
                 'booking_code' => $booking->booking_code,
                 'status' => $booking->status,
                 'booking_type' => $booking->booking_type,
+                'total_amount' => $booking->total_amount,
+                'currency' => $booking->currency,
             ], 201);
         });
     }

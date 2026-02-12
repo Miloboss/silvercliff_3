@@ -17,6 +17,17 @@ class Booking extends Model
         'email',
         'notes',
         'source',
+        'subtotal',
+        'total_amount',
+        'currency',
+        'payment_status',
+        'paid_at',
+    ];
+
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     protected static function booted()
