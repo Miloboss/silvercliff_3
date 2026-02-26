@@ -19,14 +19,36 @@ class ItinerariesRelationManager extends RelationManager
         return $form
             ->schema([
                 Forms\Components\TextInput::make('day_no')
+                    ->label('Day Number')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->minValue(1),
                 Forms\Components\TextInput::make('title')
+                    ->label('Day Title')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('description')
+                Forms\Components\RichEditor::make('description')
+                    ->label('Description')
                     ->required()
+                    ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList'])
                     ->columnSpanFull(),
+                Forms\Components\FileUpload::make('image_path')
+                    ->label('Day Image')
+                    ->image()
+                    ->directory('packages/itineraries')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->maxSize(20480)
+                    ->imageEditor()
+                    ->imageEditorAspectRatios(['16:9', '4:3', '1:1'])
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                    ->helperText('Image representing this day\'s activities. Max 20MB.')
+                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('sort_order')
+                    ->label('Sort Order')
+                    ->numeric()
+                    ->default(0)
+                    ->helperText('Lower numbers appear first'),
             ]);
     }
 
@@ -36,10 +58,22 @@ class ItinerariesRelationManager extends RelationManager
             ->recordTitleAttribute('title')
             ->columns([
                 Tables\Columns\TextColumn::make('day_no')
+                    ->label('Day')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(30),
+                Tables\Columns\ImageColumn::make('image_path')
+                    ->label('Image')
+                    ->disk('public')
+                    ->size(60),
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->label('Order')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('sort_order')
+            ->reorderable('sort_order')
             ->filters([
                 //
             ])

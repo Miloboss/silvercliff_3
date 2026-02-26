@@ -1,0 +1,445 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Boss Resort — Khao Sok Style Demo</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- AOS (scroll animations) -->
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+
+  <!-- GLightbox (gallery lightbox) -->
+  <link href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" rel="stylesheet" />
+
+  <!-- Your styles -->
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <div class="scroll-progress" aria-hidden="true">
+    <span class="scroll-progress__bar"></span>
+  </div>
+  <!-- NAVBAR -->
+  <header class="site-header">
+    <nav class="nav-wrap container">
+      <a class="brand" href="#top" aria-label="Silver Cliff Resort Home">
+        <img src="./logo.png" alt="Silver Cliff Resort" class="brand-logo"
+          onerror="this.outerHTML='<span class=\'brand-mark\'></span>'">
+        <div class="brand-text">
+          <div class="brand-title">Silver Cliff</div>
+          <div class="brand-sub">The Real Jungle Experience</div>
+        </div>
+      </a>
+
+      <!-- Desktop Menu -->
+      <ul class="nav-links d-none d-lg-flex" aria-label="Primary navigation">
+        <li><a class="nav-link" href="#intro">Introduction</a></li>
+        <li><a class="nav-link" href="#products">Products</a></li>
+        <li><a class="nav-link" href="#info">Resort Info</a></li>
+        <li><a class="nav-link" href="#packages">Packages</a></li>
+        <li><a class="nav-link" href="#gallery">Gallery</a></li>
+        <li><a class="nav-link" href="booking-status.html">Check Booking</a></li>
+        <li><a class="nav-link cta" href="booking.html?type=room">Book Now</a></li>
+      </ul>
+
+      <!-- Mobile Menu Button -->
+      <button class="menu-btn d-lg-none" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false"
+        aria-controls="mobileDrawer">
+        <!-- Animated SVG icon -->
+        <svg class="menu-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+          <path class="line line1" d="M4 7h16" />
+          <path class="line line2" d="M4 12h16" />
+          <path class="line line3" d="M4 17h16" />
+        </svg>
+      </button>
+    </nav>
+
+  </header>
+
+  <!-- HERO -->
+  <main id="top">
+    <section class="hero reveal" style="--d:0ms;">
+      <div class="hero-video-bg">
+        <video autoplay muted loop playsinline
+          poster="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1400&q=80">
+          <source src="./jjk.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="container hero-inner">
+        <div class="hero-copy" data-aos="fade-up">
+          <div class="hero-badges">
+            <span class="badge-pill">🍃 Eco-Luxury</span>
+            <span class="badge-pill">🐒 Real Jungle</span>
+            <span class="badge-pill">🏔️ Cliff Views</span>
+            <span class="badge-pill">🛶 Adventure</span>
+          </div>
+
+          <h1 class="hero-title" id="heroTitle">Wander into the heart<br />of the rainforest.</h1>
+          <p class="hero-sub" id="heroTagline">
+            The real jungle experience awaits you.
+          </p>
+
+          <div class="hero-booking-wrap" data-aos="fade-up" data-aos-delay="100">
+            <div class="glass-card hero-booking-card">
+              <form class="booking-form-inline" id="heroBookingForm">
+                <div class="booking-field">
+                  <label class="form-label-sm">Check-in</label>
+                  <input type="date" class="form-control form-dark form-control-sm" id="checkin" required>
+                </div>
+                <div class="booking-field">
+                  <label class="form-label-sm">Check-out</label>
+                  <input type="date" class="form-control form-dark form-control-sm" id="checkout" required>
+                </div>
+                <div class="booking-field stepper-field">
+                  <label class="form-label-sm">Adults</label>
+                  <div class="stepper">
+                    <button type="button" class="step-btn" data-step="down" data-target="adults">-</button>
+                    <input type="number" id="adults" value="2" min="1" max="10" readonly>
+                    <button type="button" class="step-btn" data-step="up" data-target="adults">+</button>
+                  </div>
+                </div>
+                <div class="booking-field stepper-field">
+                  <label class="form-label-sm">Children</label>
+                  <div class="stepper">
+                    <button type="button" class="step-btn" data-step="down" data-target="children">-</button>
+                    <input type="number" id="children" value="0" min="0" max="10" readonly>
+                    <button type="button" class="step-btn" data-step="up" data-target="children">+</button>
+                  </div>
+                </div>
+                <div class="booking-field">
+                  <label class="form-label-sm">Package <small style="color:var(--muted); font-weight:400;">Choose a
+                      package</small></label>
+                  <select class="form-control form-dark form-control-sm" id="packageSelect" required>
+                    <option value="" disabled selected>Select a package</option>
+                    <!-- JS options -->
+                  </select>
+                </div>
+                <div class="booking-field-cta">
+                  <button type="submit" class="btn btn-danger w-100 fw-bold">Book Now</button>
+                </div>
+                <div id="bookingValidation" class="validation-msg"></div>
+              </form>
+            </div>
+          </div>
+
+          <div class="hero-mini">
+            <div class="mini-card">
+              <div class="mini-title">Environment</div>
+              <div class="mini-value">Immersive Khao Sok Jungle</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-title">Perfect For</div>
+              <div class="mini-value">Nature Lovers • Adventurers</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-title">Experience</div>
+              <div class="mini-value">Authentic & Relaxing</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-media d-none d-lg-grid" data-aos="zoom-in">
+          <div class="hero-frame">
+            <img alt="Khao Sok style lake"
+              src="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1400&q=80" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1) Introduction -->
+    <section class="section reveal" id="intro" style="--d:80ms;">
+      <div class="container">
+        <div class="section-head text-center" data-aos="fade-up">
+          <h2 class="section-title">1) Introduction</h2>
+          <p class="section-sub">
+            Short, clear story. One main CTA. This is where trust starts.
+          </p>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-7" data-aos="fade-up">
+            <div class="glass-card p-4">
+              <h3 class="h5 fw-bold mb-2">Thailand’s natural wonder experience</h3>
+              <p class="text-muted-soft mb-3">
+                Use this space to describe your resort: vibe, location, what makes it special.
+                Keep it skimmable on mobile.
+              </p>
+              <div class="feature-grid">
+                <div class="feature" onclick="window.location.href='#gallery'" style="cursor:pointer;">
+                  <div class="feature-ico">🌄</div>
+                  <div>
+                    <div class="feature-title">Scenery</div>
+                    <div class="feature-sub">Limestone cliffs & lake view</div>
+                  </div>
+                </div>
+                <div class="feature">
+                  <div class="feature-ico">🛶</div>
+                  <div>
+                    <div class="feature-title"><a href="activities.html"
+                        style="text-decoration:none; color:inherit;">Activities</a></div>
+                    <div class="feature-sub">Boat, hike, jungle walk</div>
+                  </div>
+                </div>
+                <div class="feature">
+                  <div class="feature-ico">🏡</div>
+                  <div>
+                    <div class="feature-title">Stay</div>
+                    <div class="feature-sub">Authentic jungle bungalows</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 d-flex gap-2 flex-wrap">
+                <a href="booking.html?type=room" class="btn btn-danger fw-bold">Check Availability</a>
+                <a href="#info" class="btn btn-outline-light fw-bold">Resort Info</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-5" data-aos="fade-up" data-aos-delay="80">
+            <div class="img-card">
+              <img alt="Cheow Lan lake"
+                src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80" />
+              <div class="img-overlay">
+                <div class="img-overlay-title">Cheow Lan energy</div>
+                <div class="img-overlay-sub">Swap this with your resort hero photo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2) Products -->
+    <section class="section" id="products">
+      <div class="container">
+        <div class="section-head" data-aos="fade-up">
+          <h2 class="section-title">2) Products</h2>
+          <p class="section-sub">Rooms / Villas / Day pass — card grid like your screenshot.</p>
+        </div>
+
+        <div class="cards-grid reveal" id="productGrid" data-aos="fade-up" style="--d:90ms;">
+          <!-- JS injects cards -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 3) Resort Info -->
+    <section class="section reveal" id="info" style="--d:120ms;">
+      <div class="container">
+        <div class="section-head" data-aos="fade-up">
+          <h2 class="section-title">3) Resort Info</h2>
+          <p class="section-sub">Policies, amenities, location, check-in/out — quick bullets.</p>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-6" data-aos="fade-up">
+            <div class="glass-card p-4 h-100">
+              <h3 class="h6 fw-bold mb-3">Amenities</h3>
+              <ul class="info-list">
+                <li>✅ Breakfast included with package bookings</li>
+                <li>✅ Free Wi-Fi</li>
+                <li>✅ Tour desk / local guide</li>
+                <li>✅ On-site jungle restaurant</li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6" data-aos="fade-up" data-aos-delay="80">
+            <div class="glass-card p-4 h-100">
+              <h3 class="h6 fw-bold mb-3">Check-in / Policy</h3>
+              <ul class="info-list">
+                <li>🕑 Check-in: 14:00</li>
+                <li>🕛 Check-out: 11:00</li>
+                <li>📌 ID required</li>
+                <li>💳 Pay: Cash / Wise</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4) Packages -->
+    <section class="section reveal" id="packages" style="--d:140ms;">
+      <div class="container">
+        <div class="section-head" data-aos="fade-up">
+          <h2 class="section-title">4) Packages</h2>
+          <p class="section-sub">“Best offer” style packages + CTA buttons.</p>
+          <p class="text-muted-soft small mb-0">We focus on packages (not rooms-only bookings).</p>
+        </div>
+
+        <div class="row g-3 reveal" id="packageGrid" data-aos="fade-up" style="--d:150ms;">
+          <!-- JS injects packages -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 4b) Activities -->
+    <section class="section reveal" id="activities-section" style="--d:155ms;">
+      <div class="container position-relative">
+        <div class="section-head text-center" data-aos="fade-up">
+          <h2 class="section-title">Activities & Tours</h2>
+          <p class="section-sub">Immerse yourself in nature with our curated experiences.</p>
+        </div>
+
+        <div class="carousel-container" data-aos="fade-up">
+          <button class="carousel-nav prev" id="actPrev" aria-label="Previous">❮</button>
+          <div class="carousel-viewport">
+            <div class="carousel-track" id="activitiesGrid">
+              <!-- JS injects activities -->
+            </div>
+          </div>
+          <button class="carousel-nav next" id="actNext" aria-label="Next">❯</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5) Gallery -->
+    <section class="section reveal" id="gallery" style="--d:160ms;">
+      <div class="container">
+        <div class="section-head" data-aos="fade-up">
+          <h2 class="section-title">5) Gallery</h2>
+          <p class="section-sub">Tap images to open lightbox (GLightbox).</p>
+        </div>
+
+        <div class="gallery-filters mb-4 d-flex gap-2 flex-wrap justify-content-center" data-aos="fade-up">
+          <button class="btn btn-outline-light btn-sm filter-btn active" data-filter="all">All</button>
+          <button class="btn btn-outline-light btn-sm filter-btn" data-filter="resort">Silver Cliff Resort</button>
+          <button class="btn btn-outline-light btn-sm filter-btn" data-filter="jungle">Jungle Trek</button>
+          <button class="btn btn-outline-light btn-sm filter-btn" data-filter="lake">Lake Exploration</button>
+          <button class="btn btn-outline-light btn-sm filter-btn" data-filter="accommodation">Lake
+            Accommodation</button>
+          <button class="btn btn-outline-light btn-sm filter-btn" data-filter="elephant">Elephant Conservation</button>
+          <button class="btn btn-outline-light btn-sm filter-btn" data-filter="survival">Jungle Survival</button>
+        </div>
+
+        <div class="gallery-grid reveal" data-aos="fade-up" id="galleryGrid" style="--d:170ms;">
+          <!-- JS injects gallery items -->
+        </div>
+
+        <div class="view-more-wrap" data-aos="fade-up">
+          <a href="gallery.html" class="btn btn-outline-light px-5 py-3 fw-bold">View Full Gallery</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6) Contact Details -->
+    <section class="section reveal" id="contact" style="--d:180ms;">
+      <div class="container">
+        <div class="section-head" data-aos="fade-up">
+          <h2 class="section-title">6) Contact Details</h2>
+          <p class="section-sub">Clear contact cards + quick actions.</p>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-7" data-aos="fade-up">
+            <div class="glass-card p-5 text-center">
+              <h3 class="h4 fw-bold mb-3">Begin Your Adventure</h3>
+              <p class="text-muted-soft mb-4">
+                Ready to experience the magic of Khao Sok? Book your stay today and wake up to the sounds of the jungle.
+              </p>
+              <button class="btn btn-danger btn-lg fw-bold px-5 py-3" onclick="goToBookingPage()">Book Now</button>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-5" data-aos="fade-up" data-aos-delay="80">
+            <div class="glass-card p-4 h-100">
+              <h3 class="h6 fw-bold mb-3">Quick contact</h3>
+
+              <div class="contact-card">
+                <div class="contact-ico">📞</div>
+                <div>
+                  <div class="contact-title">WhatsApp</div>
+                  <div class="contact-sub" id="quickWhatsapp">+66 (0) 000 000 000</div>
+                </div>
+              </div>
+
+              <div class="contact-card">
+                <div class="contact-ico">✉️</div>
+                <div>
+                  <div class="contact-title">Email</div>
+                  <div class="contact-sub" id="quickEmail">info@silvercliffresort.com</div>
+                </div>
+              </div>
+
+              <div class="contact-card">
+                <div class="contact-ico">📍</div>
+                <div>
+                  <div class="contact-title">Location</div>
+                  <div class="contact-sub" id="quickLocation">Khao Sok, Surat Thani</div>
+                </div>
+              </div>
+
+              <div class="mt-3 d-grid gap-2">
+                <a class="btn btn-danger fw-bold" id="quickCallLink" href="tel:+66000000000">Call now</a>
+                <a class="btn btn-outline-light fw-bold" href="#gallery">See photos</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="container">
+            <div class="footer-inner">
+              <span>© <span id="year"></span> Silver Cliff Resort</span>
+              <span class="muted">Built with Bootstrap + AOS + GLightbox</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <!-- Mobile Drawer -->
+  <div class="drawer" id="mobileDrawer" aria-hidden="true">
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <div class="brand">
+          <img src="./logo.png" alt="Silver Cliff Resort" class="brand-logo"
+            onerror="this.outerHTML='<span class=\'brand-mark\'></span>'">
+          <div class="brand-text">
+            <div class="brand-title">Silver Cliff</div>
+            <div class="brand-sub">The Real Jungle Experience</div>
+          </div>
+        </div>
+        <button class="drawer-close" id="drawerClose" aria-label="Close menu">✕</button>
+      </div>
+
+      <ul class="drawer-links" aria-label="Mobile navigation">
+        <li><a href="#intro" class="drawer-link">1) Introduction</a></li>
+        <li><a href="#products" class="drawer-link">2) Products</a></li>
+        <li><a href="#info" class="drawer-link">3) Resort Info</a></li>
+        <li><a href="#packages" class="drawer-link">4) Packages</a></li>
+        <li><a href="#gallery" class="drawer-link">5) Gallery</a></li>
+        <li><a href="booking-status.html" class="drawer-link">Check Booking</a></li>
+        <li><a href="#contact" class="drawer-link drawer-cta">6) Contact Details</a></li>
+      </ul>
+
+      <div class="drawer-foot">
+        <a class="btn btn-danger w-100 fw-bold" href="booking.html?type=room">Book Your Stay</a>
+        <p class="drawer-note">Tip: Custom links for mobile view.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- AOS -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+
+  <!-- GLightbox -->
+  <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+
+
+
+  <!-- Your JS -->
+  <script src="./app.js"></script>
+</body>
+
+</html>

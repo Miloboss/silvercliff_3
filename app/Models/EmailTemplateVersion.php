@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class EmailTemplateVersion extends Model
+{
+    public $timestamps = false;
+
+    protected $fillable = ['email_template_id', 'version', 'snapshot', 'saved_at'];
+
+    protected $casts = [
+        'snapshot' => 'array',
+        'saved_at' => 'datetime',
+    ];
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(EmailTemplate::class);
+    }
+}

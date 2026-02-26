@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Boss Resort — Khao Sok Style Demo</title>
+  <title id="siteTitle">Silver Cliff Resort</title>
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -17,9 +17,13 @@
 
   <!-- Your styles -->
   <link rel="stylesheet" href="./styles.css" />
+  <!-- Rooms card styles (reused for homepage resort cards) -->
+  <link rel="stylesheet" href="./rooms.css" />
 </head>
 
-<body>
+<body class="home-page">
+  <!-- Site Settings (shared include) -->
+  <script src="./site-settings.js"></script>
   <div class="scroll-progress" aria-hidden="true">
     <span class="scroll-progress__bar"></span>
   </div>
@@ -30,16 +34,16 @@
         <img src="./logo.png" alt="Silver Cliff Resort" class="brand-logo"
           onerror="this.outerHTML='<span class=\'brand-mark\'></span>'">
         <div class="brand-text">
-          <div class="brand-title">Silver Cliff</div>
-          <div class="brand-sub">The Real Jungle Experience</div>
+          <div class="brand-title" id="siteName">Silver Cliff</div>
+          <div class="brand-sub" id="siteTagline">The Real Jungle Experience</div>
         </div>
       </a>
 
       <!-- Desktop Menu -->
       <ul class="nav-links d-none d-lg-flex" aria-label="Primary navigation">
         <li><a class="nav-link" href="#intro">Introduction</a></li>
-        <li><a class="nav-link" href="#products">Products</a></li>
-        <li><a class="nav-link" href="#info">Resort Info</a></li>
+        <li><a class="nav-link" href="rooms.html">Rooms</a></li>
+        <li><a class="nav-link" href="resort.html">The Resort</a></li>
         <li><a class="nav-link" href="#packages">Packages</a></li>
         <li><a class="nav-link" href="#gallery">Gallery</a></li>
         <li><a class="nav-link" href="booking-status.html">Check Booking</a></li>
@@ -117,9 +121,10 @@
                     <option value="" disabled selected>Select a package</option>
                     <!-- JS options -->
                   </select>
+                  <input type="hidden" id="heroPackageOptions" name="package_options">
                 </div>
                 <div class="booking-field-cta">
-                  <button type="submit" class="btn btn-danger w-100 fw-bold">Book Now</button>
+                  <button type="submit" class="btn btn-danger w-100 fw-bold" id="heroCtaText">Book Now</button>
                 </div>
                 <div id="bookingValidation" class="validation-msg"></div>
               </form>
@@ -155,7 +160,7 @@
     <section class="section reveal" id="intro" style="--d:80ms;">
       <div class="container">
         <div class="section-head text-center" data-aos="fade-up">
-          <h2 class="section-title">1) Introduction</h2>
+          <h2 class="section-title">Introduction</h2>
           <p class="section-sub">
             Short, clear story. One main CTA. This is where trust starts.
           </p>
@@ -164,8 +169,8 @@
         <div class="row g-3">
           <div class="col-12 col-lg-7" data-aos="fade-up">
             <div class="glass-card p-4">
-              <h3 class="h5 fw-bold mb-2">Thailand’s natural wonder experience</h3>
-              <p class="text-muted-soft mb-3">
+              <h3 class="h5 fw-bold mb-2" id="introTitle">Thailand’s natural wonder experience</h3>
+              <p class="text-muted-soft mb-3" id="introText">
                 Use this space to describe your resort: vibe, location, what makes it special.
                 Keep it skimmable on mobile.
               </p>
@@ -219,12 +224,18 @@
     <section class="section" id="products">
       <div class="container">
         <div class="section-head" data-aos="fade-up">
-          <h2 class="section-title">2) Products</h2>
-          <p class="section-sub">Rooms / Villas / Day pass — card grid like your screenshot.</p>
+          <h2 class="section-title">Resort Rooms Preview</h2>
+          <p class="section-sub">Discover our jungle room categories and stay styles.</p>
         </div>
 
-        <div class="cards-grid reveal" id="productGrid" data-aos="fade-up" style="--d:90ms;">
-          <!-- JS injects cards -->
+        <div class="carousel-container rooms-carousel" data-aos="fade-up">
+          <button class="carousel-nav prev" id="roomsPrev" aria-label="Previous room">❮</button>
+          <div class="carousel-viewport rooms-carousel-viewport">
+            <div class="cards-grid reveal" id="productGrid" style="--d:90ms;">
+              <!-- JS injects cards -->
+            </div>
+          </div>
+          <button class="carousel-nav next" id="roomsNext" aria-label="Next room">❯</button>
         </div>
       </div>
     </section>
@@ -233,7 +244,7 @@
     <section class="section reveal" id="info" style="--d:120ms;">
       <div class="container">
         <div class="section-head" data-aos="fade-up">
-          <h2 class="section-title">3) Resort Info</h2>
+          <h2 class="section-title">Resort Info</h2>
           <p class="section-sub">Policies, amenities, location, check-in/out — quick bullets.</p>
         </div>
 
@@ -241,7 +252,7 @@
           <div class="col-12 col-lg-6" data-aos="fade-up">
             <div class="glass-card p-4 h-100">
               <h3 class="h6 fw-bold mb-3">Amenities</h3>
-              <ul class="info-list">
+              <ul class="info-list" id="amenitiesList">
                 <li>✅ Breakfast included with package bookings</li>
                 <li>✅ Free Wi-Fi</li>
                 <li>✅ Tour desk / local guide</li>
@@ -252,7 +263,7 @@
           <div class="col-12 col-lg-6" data-aos="fade-up" data-aos-delay="80">
             <div class="glass-card p-4 h-100">
               <h3 class="h6 fw-bold mb-3">Check-in / Policy</h3>
-              <ul class="info-list">
+              <ul class="info-list" id="policiesList">
                 <li>🕑 Check-in: 14:00</li>
                 <li>🕛 Check-out: 11:00</li>
                 <li>📌 ID required</li>
@@ -268,8 +279,8 @@
     <section class="section reveal" id="packages" style="--d:140ms;">
       <div class="container">
         <div class="section-head" data-aos="fade-up">
-          <h2 class="section-title">4) Packages</h2>
-          <p class="section-sub">“Best offer” style packages + CTA buttons.</p>
+          <h2 class="section-title" id="packagesTitle">Packages</h2>
+          <p class="section-sub" id="packagesSubtitle">“Best offer” style packages + CTA buttons.</p>
           <p class="text-muted-soft small mb-0">We focus on packages (not rooms-only bookings).</p>
         </div>
 
@@ -283,8 +294,8 @@
     <section class="section reveal" id="activities-section" style="--d:155ms;">
       <div class="container position-relative">
         <div class="section-head text-center" data-aos="fade-up">
-          <h2 class="section-title">Activities & Tours</h2>
-          <p class="section-sub">Immerse yourself in nature with our curated experiences.</p>
+          <h2 class="section-title" id="activitiesTitle">Activities & Tours</h2>
+          <p class="section-sub" id="activitiesSubtitle">Immerse yourself in nature with our curated experiences.</p>
         </div>
 
         <div class="carousel-container" data-aos="fade-up">
@@ -303,8 +314,8 @@
     <section class="section reveal" id="gallery" style="--d:160ms;">
       <div class="container">
         <div class="section-head" data-aos="fade-up">
-          <h2 class="section-title">5) Gallery</h2>
-          <p class="section-sub">Tap images to open lightbox (GLightbox).</p>
+          <h2 class="section-title" id="galleryTitle">Gallery</h2>
+          <p class="section-sub" id="gallerySubtitle">Tap images to open lightbox (GLightbox).</p>
         </div>
 
         <div class="gallery-filters mb-4 d-flex gap-2 flex-wrap justify-content-center" data-aos="fade-up">
@@ -318,12 +329,13 @@
           <button class="btn btn-outline-light btn-sm filter-btn" data-filter="survival">Jungle Survival</button>
         </div>
 
-        <div class="gallery-grid reveal" data-aos="fade-up" id="galleryGrid" style="--d:170ms;">
+        <div class="gallery-grid home-gallery reveal" data-aos="fade-up" id="galleryGrid" style="--d:170ms;">
           <!-- JS injects gallery items -->
         </div>
 
         <div class="view-more-wrap" data-aos="fade-up">
-          <a href="gallery.html" class="btn btn-outline-light px-5 py-3 fw-bold">View Full Gallery</a>
+          <a href="gallery.html" class="btn btn-outline-light px-5 py-3 fw-bold" id="galleryCtaText">View Full
+            Gallery</a>
         </div>
       </div>
     </section>
@@ -332,30 +344,31 @@
     <section class="section reveal" id="contact" style="--d:180ms;">
       <div class="container">
         <div class="section-head" data-aos="fade-up">
-          <h2 class="section-title">6) Contact Details</h2>
+          <h2 class="section-title">Contact Details</h2>
           <p class="section-sub">Clear contact cards + quick actions.</p>
         </div>
 
         <div class="row g-3">
           <div class="col-12 col-lg-7" data-aos="fade-up">
-            <div class="glass-card p-5 text-center">
-              <h3 class="h4 fw-bold mb-3">Begin Your Adventure</h3>
-              <p class="text-muted-soft mb-4">
-                Ready to experience the magic of Khao Sok? Book your stay today and wake up to the sounds of the jungle.
-              </p>
-              <button class="btn btn-danger btn-lg fw-bold px-5 py-3" onclick="goToBookingPage()">Book Now</button>
+            <div class="glass-card p-0 overflow-hidden h-100">
+              <div class="map-frame">
+                <iframe id="contactMap"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3941.938056599948!2d98.53302197352671!3d8.88535149122402!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3051264e92b2677b%3A0xea1b2e8b31958e99!2sKhao%20Sok%20Silver%20Cliff%20Resort!5e0!3m2!1sen!2sth!4v1771559137276!5m2!1sen!2sth"
+                  width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"></iframe>
+              </div>
             </div>
           </div>
 
           <div class="col-12 col-lg-5" data-aos="fade-up" data-aos-delay="80">
             <div class="glass-card p-4 h-100">
-              <h3 class="h6 fw-bold mb-3">Quick contact</h3>
+              <h3 class="h6 fw-bold mb-3"><span id="contactBrandName">Silver Cliff Resort</span> Contact</h3>
 
               <div class="contact-card">
                 <div class="contact-ico">📞</div>
                 <div>
                   <div class="contact-title">WhatsApp</div>
-                  <div class="contact-sub" id="quickWhatsapp">+66 (0) 000 000 000</div>
+                  <div class="contact-sub" id="quickWhatsapp" data-setting="whatsapp">+66 (0) 000 000 000</div>
                 </div>
               </div>
 
@@ -363,7 +376,7 @@
                 <div class="contact-ico">✉️</div>
                 <div>
                   <div class="contact-title">Email</div>
-                  <div class="contact-sub" id="quickEmail">info@silvercliffresort.com</div>
+                  <div class="contact-sub" id="quickEmail" data-setting="email">info@silvercliffresort.com</div>
                 </div>
               </div>
 
@@ -371,13 +384,14 @@
                 <div class="contact-ico">📍</div>
                 <div>
                   <div class="contact-title">Location</div>
-                  <div class="contact-sub" id="quickLocation">Khao Sok, Surat Thani</div>
+                  <div class="contact-sub" id="quickLocation" data-setting="address">Khao Sok, Surat Thani</div>
                 </div>
               </div>
 
               <div class="mt-3 d-grid gap-2">
-                <a class="btn btn-danger fw-bold" id="quickCallLink" href="tel:+66000000000">Call now</a>
-                <a class="btn btn-outline-light fw-bold" href="#gallery">See photos</a>
+                <a class="btn btn-danger fw-bold" id="quickCallLink" href="tel:+66000000000">WhatsApp now</a>
+                <a class="btn btn-outline-light fw-bold" id="openMapLink"
+                  href="https://maps.app.goo.gl/gCZ2pg8xa2QtnP3i9" target="_blank" rel="noopener">Open in Maps</a>
               </div>
             </div>
           </div>
@@ -386,7 +400,7 @@
         <footer class="footer">
           <div class="container">
             <div class="footer-inner">
-              <span>© <span id="year"></span> Silver Cliff Resort</span>
+              <span>© <span id="year"></span> <span class="footer-brand-name">Silver Cliff Resort</span></span>
               <span class="muted">Built with Bootstrap + AOS + GLightbox</span>
             </div>
           </div>
@@ -403,26 +417,61 @@
           <img src="./logo.png" alt="Silver Cliff Resort" class="brand-logo"
             onerror="this.outerHTML='<span class=\'brand-mark\'></span>'">
           <div class="brand-text">
-            <div class="brand-title">Silver Cliff</div>
-            <div class="brand-sub">The Real Jungle Experience</div>
+            <div class="brand-title" id="siteNameMobile">Silver Cliff</div>
+            <div class="brand-sub" id="siteTaglineMobile">The Real Jungle Experience</div>
           </div>
         </div>
         <button class="drawer-close" id="drawerClose" aria-label="Close menu">✕</button>
       </div>
 
       <ul class="drawer-links" aria-label="Mobile navigation">
-        <li><a href="#intro" class="drawer-link">1) Introduction</a></li>
-        <li><a href="#products" class="drawer-link">2) Products</a></li>
-        <li><a href="#info" class="drawer-link">3) Resort Info</a></li>
-        <li><a href="#packages" class="drawer-link">4) Packages</a></li>
-        <li><a href="#gallery" class="drawer-link">5) Gallery</a></li>
+        <li><a href="#top" class="drawer-link active">Home</a></li>
+        <li><a href="rooms.html" class="drawer-link">Rooms</a></li>
+        <li><a href="resort.html" class="drawer-link">The Resort</a></li>
+        <li><a href="#packages" class="drawer-link">Packages</a></li>
+        <li><a href="#gallery" class="drawer-link">Gallery</a></li>
         <li><a href="booking-status.html" class="drawer-link">Check Booking</a></li>
-        <li><a href="#contact" class="drawer-link drawer-cta">6) Contact Details</a></li>
+        <li><a href="#contact" class="drawer-link drawer-cta">Contact Details</a></li>
       </ul>
 
       <div class="drawer-foot">
         <a class="btn btn-danger w-100 fw-bold" href="booking.html?type=room">Book Your Stay</a>
         <p class="drawer-note">Tip: Custom links for mobile view.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Package Detail Modal -->
+  <div class="modal-overlay" id="packageDetailModal">
+    <div class="modal-panel" style="width: min(700px, 95vw); max-height: 90vh; overflow-y: auto; padding: 30px;">
+      <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+          <h2 class="h3 fw-bold mb-1" id="mdlPkgTitle">Package Name</h2>
+          <p class="text-secondary small mb-0" id="mdlPkgSubtitle">Subtitle here</p>
+        </div>
+        <button class="drawer-close" onclick="closePackageModal()">&#x2715;</button>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <img id="mdlPkgImage" src="" alt="" class="img-fluid rounded-4 mb-3"
+            style="width:100%; height:200px; object-fit:cover;">
+          <p id="mdlPkgDesc" class="small text-muted-soft"></p>
+          <div class="h5 fw-bold text-danger mt-3" id="mdlPkgPrice">THB 0.00</div>
+        </div>
+        <div class="col-md-6">
+          <h4 class="h6 fw-bold text-uppercase letter-spacing text-secondary mb-3">Experience Timeline</h4>
+          <div id="mdlItineraryTimeline" class="timeline py-0" style="font-size: 0.85rem;"></div>
+        </div>
+      </div>
+      <div id="mdlOptionsSection" class="mt-4 p-4 rounded-4 border border-secondary bg-dark bg-opacity-25 d-none">
+        <h4 class="h6 fw-bold mb-3 text-secondary">Choose any 2 Day 1 options <span class="text-danger">*</span></h4>
+        <div id="mdlOptionsGrid" class="row g-2"></div>
+        <div id="mdlOptionsError" class="small text-danger mt-2" style="display:none;">Please select exactly 2 options
+          to continue.</div>
+      </div>
+      <div class="d-grid mt-4">
+        <button class="btn btn-danger btn-lg fw-bold py-3" onclick="continueToHeroBooking()">Continue to
+          Booking</button>
       </div>
     </div>
   </div>
@@ -435,8 +484,6 @@
 
   <!-- GLightbox -->
   <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
-
-
 
   <!-- Your JS -->
   <script src="./app.js"></script>

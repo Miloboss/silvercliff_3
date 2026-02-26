@@ -19,15 +19,125 @@ class SiteSettingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('key')
-                    ->required(),
-                Forms\Components\Textarea::make('value')
-                    ->required()
-                    ->columnSpanFull(),
+                Forms\Components\Section::make('General Information')
+                    ->description('Basic setting identification')
+                    ->schema([
+                        Forms\Components\TextInput::make('label')
+                            ->label('Setting Name')
+                            ->helperText('The user-friendly name for this setting.')
+                            ->required()
+                            ->columnSpan(1),
+                        Forms\Components\Select::make('group')
+                            ->label('Category / Group')
+                            ->helperText('Which part of the website this setting belongs to.')
+                            ->options([
+                                'hero' => '1. Hero Section',
+                                'intro' => '2. Welcome / Intro',
+                                'activities' => '3. Activities Section',
+                                'packages' => '4. Packages Section',
+                                'gallery' => '5. Gallery Section',
+                                'contact' => '6. Contact & Footer',
+                                'global' => '7. Branding & Logo',
+                            ])
+                            ->required()
+                            ->columnSpan(1),
+                        Forms\Components\Placeholder::make('current_key')
+                            ->label('Internal Identifier')
+                            ->content(fn ($record) => $record?->key ?? 'New Record'),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Setting Value')
+                    ->description('Edit the actual content here')
+                    ->schema([
+                        Forms\Components\TextInput::make('value')
+                            ->label(fn ($record) => $record?->label ?? 'Value')
+                            ->helperText('Enter the text content.')
+                            ->visible(fn ($get) => in_array($get('type'), ['text', 'email']))
+                            ->required(),
+                        Forms\Components\TextInput::make('value')
+                            ->label(fn ($record) => $record?->label ?? 'Value')
+                            ->helperText('Enter a numeric value (e.g. limit).')
+                            ->numeric()
+                            ->visible(fn ($get) => $get('type') === 'number')
+                            ->afterStateHydrated(function ($component, $state, $get) {
+                                if ($get('type') === 'number') {
+                                    $component->state((int)$state);
+                                }
+                            })
+                            ->required(),
+                        Forms\Components\Textarea::make('value')
+                            ->label(fn ($record) => $record?->label ?? 'Description')
+                            ->helperText('Multi-line text content.')
+                            ->rows(5)
+                            ->visible(fn ($get) => $get('type') === 'textarea')
+                            ->required(),
+                        Forms\Components\FileUpload::make('value')
+                            ->label(fn ($record) => $record?->label ?? 'Media File')
+                            ->helperText('Upload images (PNG/JPG/WebP). Max 10MB.')
+                            ->disk('public')
+                            ->directory('settings')
+                            ->image()
+                            ->imageResizeMode('contain')
+                            ->maxSize(10240)
+                            ->visible(fn ($get) => $get('type') === 'file')
+                            ->nullable()
+                            ->getUploadedFileUsing(static function (Forms\Components\FileUpload $component, string $file): ?array {
+                                // Handle legacy paths like 'simple_web_ui/logo.png'
+                                if (str_starts_with($file, 'simple_web_ui/')) {
+                                    return [
+                                        'name' => basename($file),
+                                        'size' => 0,
+                                        'type' => 'image/png',
+                                        'url'  => url($file),
+                                    ];
+                                }
+
+                                // Handle full http URLs stored directly
+                                if (str_starts_with($file, 'http')) {
+                                    return [
+                                        'name' => basename(parse_url($file, PHP_URL_PATH)),
+                                        'size' => 0,
+                                        'type' => 'image/png',
+                                        'url'  => $file,
+                                    ];
+                                }
+
+                                // Standard storage path (e.g. 'settings/logo.png')
+                                $storage = \Illuminate\Support\Facades\Storage::disk('public');
+                                if (! $storage->exists($file)) {
+                                    return null;
+                                }
+
+                                return [
+                                    'name' => basename($file),
+                                    'size' => $storage->size($file),
+                                    'type' => $storage->mimeType($file),
+                                    'url'  => $storage->url($file),
+                                ];
+                            }),
+                        Forms\Components\Toggle::make('value')
+                            ->label(fn ($record) => $record?->label ?? 'Enabled')
+                            ->helperText('Toggle this feature on or off.')
+                            ->visible(fn ($get) => $get('type') === 'boolean')
+                            ->afterStateHydrated(function ($component, $state, $get) {
+                                if ($get('type') === 'boolean') {
+                                    $component->state((bool)$state);
+                                }
+                            })
+                            ->dehydrateStateUsing(fn ($state, $get) => $get('type') === 'boolean' ? ($state ? '1' : '0') : $state),
+                    ]),
+
+                Forms\Components\Hidden::make('key'),
+                Forms\Components\Hidden::make('type'),
             ]);
     }
 
@@ -35,19 +145,55 @@ class SiteSettingResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('key')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('label')
+                    ->label('Setting Name')
+                    ->description(fn ($record) => $record->key)
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('group')
+                    ->label('Section')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'hero' => '1. Hero',
+                        'intro' => '2. Welcome',
+                        'activities' => '3. Activities',
+                        'packages' => '4. Packages',
+                        'gallery' => '5. Gallery',
+                        'contact' => '6. Contact',
+                        'global' => '7. Branding',
+                        default => $state,
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'hero' => 'primary',
+                        'activities' => 'success',
+                        'gallery' => 'warning',
+                        'contact' => 'info',
+                        'global' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('value')
+                    ->limit(50)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Last Updated')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('group', 'asc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('group')
+                    ->label('Filter by Section')
+                    ->options([
+                        'hero' => 'Hero',
+                        'intro' => 'Intro',
+                        'activities' => 'Activities',
+                        'packages' => 'Packages',
+                        'gallery' => 'Gallery',
+                        'contact' => 'Contact',
+                        'global' => 'Branding',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

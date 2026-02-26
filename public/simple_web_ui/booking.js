@@ -1,26 +1,46 @@
-// booking.js - Precise Booking Flow Integration
+// booking.js - 3-Block Booking Hub
 (function () {
     // 1. URL Parameter Parsing
     const urlParams = new URLSearchParams(window.location.search);
-    const bookingType = urlParams.get('type') || 'room';
+    const normalizeBookingType = (value) => {
+        const clean = String(value || '').trim().toLowerCase();
+        return ['room', 'tour', 'package'].includes(clean) ? clean : '';
+    };
+
+    // Prefer explicit booking_type first, then type, then safe fallback.
+    const bookingType = normalizeBookingType(urlParams.get('booking_type'))
+        || normalizeBookingType(urlParams.get('type'))
+        || 'room';
 
     // 2. DOM State Management
     const state = {
-        booking_type: bookingType,
-        package_id: urlParams.get('package_id') || '',
-        activity_id: urlParams.get('activity_id') || '',
-        check_in: urlParams.get('checkin') || new Date().toISOString().split('T')[0],
-        check_out: urlParams.get('checkout') || '',
+        type: bookingType, // room | package | tour
+        // Room Params
+        check_in: urlParams.get('check_in') || urlParams.get('checkin') || new Date().toISOString().split('T')[0],
+        check_out: urlParams.get('check_out') || urlParams.get('checkout') || '',
         adults: parseInt(urlParams.get('adults')) || 2,
         children: parseInt(urlParams.get('children')) || 0,
-        tour_date: urlParams.get('checkin') || new Date().toISOString().split('T')[0],
+        room_slug: urlParams.get('room_slug') || urlParams.get('room_type') || '',
+
+        // Package Params
+        package_id: urlParams.get('package_id') || '',
+        arrival_date: urlParams.get('arrival_date') || urlParams.get('check_in') || '',
+        // Accept options via correct key
+        package_options: (urlParams.get('package_options') || urlParams.get('options') || '').split(',').filter(Boolean).map(Number),
+
+        // Tour Params
+        tour_id: urlParams.get('activity_id') || '',
+        tour_date: urlParams.get('tour_date') || new Date().toISOString().split('T')[0],
         tour_time: urlParams.get('tour_time') || '',
+        tour_pax: parseInt(urlParams.get('adults')) || 2,
+
+        // Data
         packages: [],
         activities: []
     };
 
-    // Calculate default checkout (tomorrow) if missing
-    if (!state.check_out && (state.booking_type === 'room' || state.booking_type === 'package')) {
+    // Default checkout calculation for Room
+    if (!state.check_out && state.type === 'room') {
         const d = new Date(state.check_in);
         d.setDate(d.getDate() + 1);
         state.check_out = d.toISOString().split('T')[0];
@@ -28,228 +48,361 @@
 
     // 3. UI Selectors
     const form = document.getElementById('finalBookingForm');
-    const submitBtn = document.getElementById('submitBooking');
-    const successModal = document.getElementById('successModal');
-    const finalCodeDisplay = document.getElementById('finalCode');
+    const submitBtn = document.getElementById('submitBtn');
 
-    // Summary elements
-    const summTitle = document.getElementById('summTitle');
-    const summCheckIn = document.getElementById('summCheckIn');
-    const summCheckOut = document.getElementById('summCheckOut');
-    const summGuests = document.getElementById('summGuests');
-    const summPrice = document.getElementById('summPrice');
-    const summTypeBadge = document.getElementById('summType');
-    const checkOutCol = document.getElementById('checkOutCol');
+    // Blocks
+    const blocks = {
+        room: document.getElementById('roomBookingSection'),
+        package: document.getElementById('packageBookingSection'),
+        tour: document.getElementById('tourBookingSection')
+    };
 
-    // 4. Initial UI Setup
-    function setupTypeVisibility() {
-        document.querySelectorAll('.booking-type-section').forEach(s => s.classList.add('d-none'));
-        const activeSection = document.getElementById(`${state.booking_type}Fields`);
-        if (activeSection) activeSection.classList.remove('d-none');
+    // Summary Elements (Desktop & Mobile)
+    const ui = {
+        desktopTitle: document.getElementById('summItemTitle'),
+        desktopDate: document.getElementById('summDate'),
+        desktopDetails: document.getElementById('summDetails'),
+        desktopPrice: document.getElementById('summPrice'),
 
-        if (state.booking_type === 'tour') {
-            checkOutCol?.classList.add('d-none');
+        mobileTitle: document.getElementById('mobileSummTitle'),
+        mobileDate: document.getElementById('mobileSummDate'),
+        mobilePrice: document.getElementById('mobileSummPrice')
+    };
+
+    // 4. Initialization
+    function init() {
+        showActiveBlock();
+        syncInputs();
+        updateSummary();
+        loadCatalog();
+        initListeners();
+    }
+
+    function showActiveBlock() {
+        Object.values(blocks).forEach(b => {
+            if (b) b.classList.add('d-none');
+        });
+
+        if (blocks[state.type]) {
+            blocks[state.type].classList.remove('d-none');
         } else {
-            checkOutCol?.classList.remove('d-none');
+            // fallback
+            state.type = 'room';
+            if (blocks.room) blocks.room.classList.remove('d-none');
         }
     }
 
-    function syncStateToInputs() {
-        document.getElementById('adults').value = state.adults;
-        document.getElementById('children').value = state.children;
+    function syncInputs() {
+        // Room
+        const rCin = document.getElementById('roomCheckin');
+        if (rCin) rCin.value = state.check_in;
+        const rCout = document.getElementById('roomCheckout');
+        if (rCout) rCout.value = state.check_out;
+        const rAd = document.getElementById('roomAdultsDisplay');
+        if (rAd) rAd.textContent = state.adults;
+        const rCh = document.getElementById('roomChildrenDisplay');
+        if (rCh) rCh.textContent = state.children;
 
-        if (state.booking_type === 'room') {
-            document.getElementById('checkin').value = state.check_in;
-            document.getElementById('checkout').value = state.check_out;
-        } else if (state.booking_type === 'package') {
-            document.getElementById('pkgCheckin').value = state.check_in;
-            document.getElementById('pkgCheckout').value = state.check_out;
-        } else if (state.booking_type === 'tour') {
-            document.getElementById('tourDate').value = state.tour_date;
+        // Package
+        if (state.type === 'package') {
+            // No packageId input is currently in HTML (read-only text is used), so we skip setting value
+            const pArr = document.getElementById('pkgArrivalDate');
+            if (pArr) pArr.value = state.arrival_date;
         }
+
+        // Tour
+        const tDate = document.getElementById('tourDate');
+        if (tDate) tDate.value = state.tour_date;
+        const tPax = document.getElementById('tourPaxDisplay');
+        if (tPax) tPax.textContent = state.tour_pax;
     }
 
-    // 5. API Data Loading
-    async function loadData() {
+    // 5. Data Loading & Rendering
+    async function loadCatalog() {
         try {
-            // Packages
-            const pkgRes = await fetch('/api/packages');
-            state.packages = await pkgRes.json();
-            const pkgSelect = document.getElementById('packageSelect');
-            if (pkgSelect) {
-                pkgSelect.innerHTML = state.packages.map(p =>
-                    `<option value="${p.id}" ${p.id == state.package_id ? 'selected' : ''}>${p.title}</option>`
-                ).join('');
-                if (!state.package_id && state.packages.length) {
-                    state.package_id = state.packages[0].id;
+            // Load Packages
+            if (state.type === 'package') {
+                const res = await fetch('/api/packages');
+                state.packages = await res.json();
+                const pkg = state.packages.find(p => p.id == state.package_id);
+
+                if (pkg) {
+                    const nameEl = document.getElementById('pkgNameDisplay');
+                    if (nameEl) nameEl.value = pkg.title;
+                    renderPackageOptions(pkg);
                 }
             }
 
-            // Activities
-            const actRes = await fetch('/api/activities');
-            state.activities = await actRes.json();
-            const actSelect = document.getElementById('activitySelect');
-            if (actSelect) {
-                actSelect.innerHTML = state.activities.map(a =>
-                    `<option value="${a.id}" ${a.id == state.activity_id ? 'selected' : ''}>${a.title}</option>`
-                ).join('');
-                if (!state.activity_id && state.activities.length) {
-                    state.activity_id = state.activities[0].id;
+            // Load Activities (for Tour type)
+            if (state.type === 'tour') {
+                const res = await fetch('/api/activities');
+                state.activities = await res.json();
+
+                const select = document.getElementById('tourSelect');
+                if (select) {
+                    select.innerHTML = state.activities.map(a =>
+                        `<option value="${a.id}" ${state.tour_id == a.id ? 'selected' : ''}>${a.title}</option>`
+                    ).join('');
+
+                    if (!state.tour_id && state.activities.length) {
+                        state.tour_id = state.activities[0].id;
+                    }
+                    updateTimeSlots();
                 }
-                updateTimeSlots();
             }
 
             updateSummary();
-        } catch (err) {
-            console.error("Failed to load catalog data", err);
+        } catch (e) {
+            console.error("Data load failed", e);
         }
     }
 
-    function updateTimeSlots() {
-        const tourTimeSelect = document.getElementById('tourTime');
-        if (!tourTimeSelect) return;
+    function renderPackageOptions(pkg) {
+        const container = document.getElementById('pkgOptionsContainer');
+        if (!container) return;
 
-        const activity = state.activities.find(a => a.id == state.activity_id);
-        if (activity && activity.time_slots && activity.time_slots.length > 0) {
-            tourTimeSelect.innerHTML = activity.time_slots.map(slot =>
-                `<option value="${slot}" ${state.tour_time === slot ? 'selected' : ''}>${slot}</option>`
-            ).join('');
-            if (!state.tour_time || !activity.time_slots.includes(state.tour_time)) {
-                state.tour_time = activity.time_slots[0];
-            }
+        // Filter options to only show SELECTED ones for the package booking summary
+        // Since package booking page is mostly for confirmation, we show readonly state or selected state
+        // But user might want to see what they picked.
+
+        if (!pkg.options || pkg.options.length === 0) {
+            container.innerHTML = '<div class="alert alert-secondary py-2 small">Standard itinerary included.</div>';
+            return;
+        }
+
+        // We only render the ones that are in state.package_options
+        const selectedOpts = pkg.options.filter(opt => state.package_options.includes(opt.id));
+
+        if (selectedOpts.length === 0) {
+            container.innerHTML = '<div class="alert alert-warning py-2 small">No specific activities selected.</div>';
+            return;
+        }
+
+        container.innerHTML = selectedOpts.map(opt => `
+            <div class="p-3 border rounded border-danger bg-dark bg-opacity-25 mb-2">
+                <div class="fw-bold text-danger">✓ ${opt.name}</div>
+                <div class="small text-muted-soft">${opt.description || ''}</div>
+            </div>
+        `).join('');
+
+        // Hide error since we are just displaying
+        const err = document.getElementById('pkgOptionsError');
+        if (err) err.style.display = 'none';
+    }
+
+    window.updateGuests = function (type, delta) {
+        if (type === 'adults') {
+            state.adults = Math.max(1, state.adults + delta);
+            document.getElementById('roomAdultsDisplay').textContent = state.adults;
         } else {
-            tourTimeSelect.innerHTML = '<option value="">Flexible (Admin will confirm)</option>';
+            state.children = Math.max(0, state.children + delta);
+            document.getElementById('roomChildrenDisplay').textContent = state.children;
+        }
+        updateSummary();
+    };
+
+    window.updateTourPax = function (delta) {
+        state.tour_pax = Math.max(1, state.tour_pax + delta);
+        document.getElementById('tourPaxDisplay').textContent = state.tour_pax;
+        updateSummary();
+    }
+
+    function updateTimeSlots() {
+        const select = document.getElementById('tourTime');
+        const act = state.activities.find(a => a.id == state.tour_id);
+        if (!select) return;
+
+        if (act && act.time_slots && act.time_slots.length) {
+            select.innerHTML = act.time_slots.map(t =>
+                `<option value="${t}" ${state.tour_time === t ? 'selected' : ''}>${t}</option>`
+            ).join('');
+            if (!state.tour_time) state.tour_time = act.time_slots[0];
+        } else {
+            select.innerHTML = '<option value="">Flexible (Confirm later)</option>';
             state.tour_time = '';
         }
     }
 
     // 6. Summary Logic
     function updateSummary() {
-        summTypeBadge.textContent = state.booking_type;
+        let title = '', date = '', details = '', price = '';
 
-        if (state.booking_type === 'package') {
+        if (state.type === 'package') {
             const pkg = state.packages.find(p => p.id == state.package_id);
-            summTitle.textContent = pkg ? pkg.title : 'Selected Package';
-            summPrice.textContent = pkg ? 'THB ' + new Intl.NumberFormat().format(pkg.price_thb) : '--';
-            summCheckIn.textContent = state.check_in;
-            summCheckOut.textContent = state.check_out;
-        } else if (state.booking_type === 'tour') {
-            const act = state.activities.find(a => a.id == state.activity_id);
-            summTitle.textContent = act ? act.title : 'Selected Tour';
-            summPrice.textContent = act && act.price_thb ? 'THB ' + new Intl.NumberFormat().format(act.price_thb) : 'Enquiry Only';
-            summCheckIn.textContent = state.tour_date + (state.tour_time ? ' @ ' + state.tour_time : '');
+            title = pkg ? pkg.title : 'Selected Package';
+            date = state.arrival_date ? `Arrival: ${state.arrival_date}` : 'Select Date';
+            details = `${state.package_options.length} Activities Included`;
+
+            // Calculate total price if possible (Package price is per person usually, but let's assume total for now or price_thb * 2)
+            // Package logic in controller uses price_thb as total or per pax? Controller uses price_thb.
+            // Usually packages are per person. Let's assume 2 pax for display if we want to be fancy, but keeping it simple as per Controller
+            price = pkg ? `THB ${new Intl.NumberFormat().format(pkg.price_thb)}` : '--';
+        } else if (state.type === 'tour') {
+            const act = state.activities.find(a => a.id == state.tour_id);
+            title = act ? act.title : 'Selected Tour';
+            date = `${state.tour_date} ${state.tour_time ? '@ ' + state.tour_time : ''}`;
+            details = `${state.tour_pax} Guests`;
+            price = act ? `THB ${new Intl.NumberFormat().format(act.price_thb * state.tour_pax)}` : 'On Request';
         } else {
-            summTitle.textContent = 'Room Stay (Bungalow)';
-            summPrice.textContent = 'Pay on arrival';
-            summCheckIn.textContent = state.check_in;
-            summCheckOut.textContent = state.check_out;
+            title = 'Room Stay (Bungalow)';
+            date = `${state.check_in} ➝ ${state.check_out}`;
+            details = `${state.adults} Adults, ${state.children} Child`;
+            price = 'Pay on Arrival';
         }
 
-        summGuests.textContent = `${state.adults} Adults, ${state.children} Children`;
+        if (ui.desktopTitle) ui.desktopTitle.textContent = title;
+        if (ui.desktopDate) ui.desktopDate.textContent = date;
+        if (ui.desktopDetails) ui.desktopDetails.textContent = details;
+        if (ui.desktopPrice) ui.desktopPrice.textContent = price;
+
+        if (ui.mobileTitle) ui.mobileTitle.textContent = title;
+        if (ui.mobileDate) ui.mobileDate.textContent = date;
+        if (ui.mobilePrice) ui.mobilePrice.textContent = price;
     }
 
     // 7. Event Listeners
     function initListeners() {
-        // Form field changes
-        const fields = [
-            { id: 'checkin', key: 'check_in' },
-            { id: 'checkout', key: 'check_out' },
-            { id: 'pkgCheckin', key: 'check_in' },
-            { id: 'pkgCheckout', key: 'check_out' },
-            { id: 'tourDate', key: 'tour_date' },
-            { id: 'tourTime', key: 'tour_time' },
-            { id: 'packageSelect', key: 'package_id' },
-            { id: 'activitySelect', key: 'activity_id' }
-        ];
+        // Room inputs
+        const rCin = document.getElementById('roomCheckin');
+        if (rCin) rCin.addEventListener('change', e => { state.check_in = e.target.value; updateSummary(); });
+        const rCout = document.getElementById('roomCheckout');
+        if (rCout) rCout.addEventListener('change', e => { state.check_out = e.target.value; updateSummary(); });
 
-        fields.forEach(f => {
-            const el = document.getElementById(f.id);
-            if (el) {
-                el.addEventListener('change', (e) => {
-                    state[f.key] = e.target.value;
-                    if (f.id === 'activitySelect') {
-                        updateTimeSlots();
-                    }
-                    updateSummary();
-                });
-            }
-        });
-
-        // Steppers (Adults/Children) - Handled in app.js but we listen for change
-        document.getElementById('adults').addEventListener('change', (e) => {
-            state.adults = parseInt(e.target.value);
+        // Tour inputs
+        const tSel = document.getElementById('tourSelect');
+        if (tSel) tSel.addEventListener('change', e => {
+            state.tour_id = e.target.value;
+            updateTimeSlots();
             updateSummary();
         });
-        document.getElementById('children').addEventListener('change', (e) => {
-            state.children = parseInt(e.target.value);
-            updateSummary();
-        });
+        const tDate = document.getElementById('tourDate');
+        if (tDate) tDate.addEventListener('change', e => { state.tour_date = e.target.value; updateSummary(); });
+        const tTime = document.getElementById('tourTime');
+        if (tTime) tTime.addEventListener('change', e => { state.tour_time = e.target.value; updateSummary(); });
 
-        // Final Submit
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Submit
+        if (form) form.addEventListener('submit', handleSubmit);
+    }
 
-            if (state.booking_type !== 'tour' && new Date(state.check_out) <= new Date(state.check_in)) {
-                alert("Check-out must be after check-in.");
-                return;
-            }
+    function buildPayloadFromForm() {
+        const basePayload = {
+            booking_type: state.type,
+            full_name: document.getElementById('fullName').value.trim(),
+            whatsapp: document.getElementById('phone').value.trim(),
+            email: document.getElementById('email').value.trim() || null,
+            notes: document.getElementById('notes').value.trim() || null
+        };
 
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Sending...';
+        if (!basePayload.full_name || !basePayload.whatsapp) {
+            throw new Error("Please provide your Name and WhatsApp contact.");
+        }
 
-            const payload = {
-                booking_type: state.booking_type,
-                full_name: document.getElementById('fullName').value,
-                whatsapp: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                notes: document.getElementById('notes').value,
+        if (state.type === 'package') {
+            const pkg = state.packages.find(p => p.id == state.package_id);
+            if (!pkg) throw new Error("Invalid Package selected.");
+            if (!state.arrival_date) throw new Error("Arrival date is missing.");
+
+            // Construct payload strictly for backend
+            return {
+                ...basePayload,
+                package_id: state.package_id,
+                arrival_date: state.arrival_date,
+                package_options: state.package_options,
+                // Optional defaults if backend requires them, though we don't show inputs
+                adults: 2,
+                children: 0
+            };
+        }
+        else if (state.type === 'tour') {
+            if (!state.tour_id) throw new Error("Please select an activity.");
+            if (!state.tour_date) throw new Error("Please select a date.");
+
+            return {
+                ...basePayload,
+                activity_id: state.tour_id,
+                tour_date: state.tour_date,
+                tour_time: state.tour_time || null,
+                adults: state.tour_pax,
+                children: 0
+            };
+        }
+        else { // room
+            if (!state.check_in || !state.check_out) throw new Error("Please select valid dates.");
+
+            return {
+                ...basePayload,
+                check_in: state.check_in,
+                check_out: state.check_out,
                 adults: state.adults,
                 children: state.children
             };
-
-            if (state.booking_type === 'room') {
-                payload.check_in = state.check_in;
-                payload.check_out = state.check_out;
-            } else if (state.booking_type === 'package') {
-                payload.package_id = state.package_id;
-                payload.check_in = state.check_in;
-                payload.check_out = state.check_out;
-            } else if (state.booking_type === 'tour') {
-                payload.activity_id = state.activity_id;
-                payload.tour_date = state.tour_date;
-                payload.tour_time = state.tour_time;
-            }
-
-            try {
-                const res = await fetch('/api/bookings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await res.json();
-
-                if (res.ok) {
-                    finalCodeDisplay.textContent = result.booking_code;
-                    const statusLink = document.getElementById('statusLink');
-                    if (statusLink) statusLink.href = `booking-status.html?code=${result.booking_code}`;
-                    successModal.classList.add('is-open');
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    alert("Error: " + (result.message || "Failed to submit booking. Check all fields."));
-                }
-            } catch (err) {
-                alert("Connection error. Please try again.");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Confirm & Send Request';
-            }
-        });
+        }
     }
 
-    // 8. Lifecycle
-    setupTypeVisibility();
-    syncStateToInputs();
-    loadData();
-    initListeners();
+    async function handleSubmit(e) {
+        e.preventDefault();
+
+        try {
+            const payload = buildPayloadFromForm();
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+            }
+
+            const res = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                if (res.status === 422) {
+                    let msg = result.message || "Validation failed.";
+                    if (result.errors) {
+                        msg += "\n" + Object.values(result.errors).flat().join("\n");
+                    }
+                    alert(msg);
+                } else {
+                    alert("Booking Failed: " + (result.message || "Unknown error"));
+                }
+                throw new Error("API Error");
+            }
+
+            // Success
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Request Sent';
+                submitBtn.classList.remove('btn-danger');
+                submitBtn.classList.add('btn-success');
+                submitBtn.disabled = true;
+            }
+
+            const codeEl = document.getElementById('finalCode');
+            if (codeEl) codeEl.textContent = result.booking_code;
+
+            // If it was a duplicate, maybe update modal text
+            if (result.is_duplicate) {
+                const modalTitle = document.querySelector('#successModal h2');
+                if (modalTitle) modalTitle.textContent = "Booking Already Received";
+            }
+
+            document.getElementById('statusLink').href = `booking-status.html?code=${result.booking_code}`;
+            document.getElementById('successModal').classList.add('is-open');
+
+        } catch (err) {
+            console.warn(err);
+            if (err.message && err.message !== "API Error") {
+                alert(err.message);
+            }
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Confirm Booking';
+            }
+        }
+    }
+
+    // Run
+    init();
 
 })();

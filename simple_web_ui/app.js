@@ -1,4 +1,5 @@
 // ===== Init libs =====
+console.log('🎯 APP.JS LOADED - Version: FIXED_PACKAGE_DETAILS - Line 614 links to package-details.html');
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof AOS !== 'undefined') {
     AOS.init({ duration: 650, once: true });
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const packageSelect = document.getElementById("packageSelect");
   const packageGrid = document.getElementById("packageGrid");
+  const productGrid = document.getElementById("productGrid");
   const activitiesGrid = document.getElementById("activitiesGrid");
   const galleryGrid = document.getElementById("galleryGrid");
 
@@ -145,23 +147,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const ad = document.getElementById("adults")?.value || 2;
     const ch = document.getElementById("children")?.value || 0;
     const pkgId = packageSelect?.value;
+    const options = document.getElementById("heroPackageOptions")?.value;
 
     if (new Date(cout) <= new Date(cin)) {
-      if (validationMsg) {
-        validationMsg.textContent = "Check-out must be after check-in.";
-        validationMsg.classList.add("show");
-      }
+      validationMsg.textContent = "Checkout must be after check-in.";
+      validationMsg.classList.add("show");
       return;
     }
-    if (validationMsg) validationMsg.classList.remove("show");
 
-    window.goToBookingPage({
-      booking_type: pkgId ? 'package' : 'room',
+    // Find the selected package and redirect to static details page
+    if (pkgId) {
+      const selectedPackage = currentPackages.find(p => p.id == pkgId);
+      if (selectedPackage && selectedPackage.slug) {
+        window.location.href = `package-details.html?slug=${selectedPackage.slug}`;
+        return;
+      }
+    }
+
+    // Fallback to direct booking if no package selected
+    goToBookingPage({
       package_id: pkgId,
       check_in: cin,
       check_out: cout,
       adults: ad,
-      children: ch
+      children: ch,
+      package_options: options
     });
   });
 
@@ -171,11 +181,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== API Loading (If elements exist) =====
-  if (packageGrid || activitiesGrid || galleryGrid) {
+  if (packageGrid || activitiesGrid || galleryGrid || productGrid) {
     loadSettings();
-    loadPackages();
-    loadActivities();
-    loadGallery();
+    // Subsequent loads (loadPackages, loadActivities, etc.) are triggered from inside loadSettings()
   }
 
   // Category filters setup
@@ -187,38 +195,211 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Handle URL filter for gallery
+  const urlParams = new URLSearchParams(window.location.search);
+  const filterParam = urlParams.get('filter');
+  if (filterParam && galleryGrid) {
+    const targetBtn = document.querySelector(`.filter-btn[data-filter="${filterParam}"]`);
+    if (targetBtn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      targetBtn.classList.add('active');
+      // renderGallery will be called by loadGallery after data is fetched
+    }
+  }
+
   // Year in footer
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  // Initialize scroll progress bar
+  initScrollProgress();
 });
 
 // ===== GLOBAL HELPERS & API LOGIC =====
 let currentPackages = [];
-let currentGallery = [];
+let currentGallery = []; // This stores Albums with nested images
 let currentActivities = [];
-const ACTIVITIES_LIMIT = 6;
-const GALLERY_LIMIT = 12;
+let siteSettings = {};
 
 async function loadSettings() {
   try {
     const res = await fetch('/api/settings');
     const data = await res.json();
-    if (data.tagline) {
-      const taglineEl = document.getElementById('heroTagline');
-      if (taglineEl) taglineEl.textContent = data.tagline;
+    siteSettings = data;
+
+    // 1) BRANDING BINDING
+    const branding = data.branding || {};
+    if (branding.site_name) {
+      ['siteName', 'siteNameMobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = branding.site_name;
+      });
+      const titleEl = document.getElementById('siteTitle');
+      if (titleEl) titleEl.textContent = `${branding.site_name} — ${branding.tagline || ''}`;
     }
-    if (data.hero_text) {
+    if (branding.tagline) {
+      ['siteTagline', 'siteTaglineMobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = branding.tagline;
+      });
+    }
+
+    // Logo Binding
+    const logoSrc = branding.logo_url || './logo.png';
+    document.querySelectorAll('.brand-img').forEach(img => {
+      img.src = logoSrc;
+      img.onerror = function () {
+        this.onerror = null;
+        this.src = './logo.png';
+      };
+    });
+
+    if (branding.favicon_url) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = branding.favicon_url;
+    }
+
+    // 2) CONTACT BINDING (Dynamic via data-setting)
+    const contact = data.contact || {};
+
+    // Bind text content
+    document.querySelectorAll('[data-setting]').forEach(el => {
+      const key = el.dataset.setting;
+      if (contact[key]) {
+        el.textContent = contact[key];
+      }
+    });
+
+    // Bind links (tel:, mailto:, etc)
+    document.querySelectorAll('[data-setting-link]').forEach(el => {
+      const key = el.dataset.settingLink;
+      if (contact[key]) {
+        if (key === 'phone' || key === 'whatsapp') {
+          el.href = `tel:${contact[key].replace(/\D/g, '')}`;
+        } else if (key === 'email') {
+          el.href = `mailto:${contact[key]}`;
+        } else {
+          el.href = contact[key];
+        }
+      }
+    });
+
+    // Social Links
+    if (contact.facebook) {
+      const el = document.getElementById('fbLink');
+      if (el) { el.href = contact.facebook; el.classList.remove('d-none'); }
+    }
+    if (contact.instagram) {
+      const el = document.getElementById('igLink');
+      if (el) { el.href = contact.instagram; el.classList.remove('d-none'); }
+    }
+
+    // Map Iframe
+    if (contact.map_url) {
+      const map = document.getElementById('contactMap');
+      const container = document.getElementById('mapContainer');
+      if (map && container) {
+        map.src = contact.map_url;
+        container.style.display = 'block';
+      }
+    }
+
+    // 3) HERO BINDING
+    const hero = data.hero || {};
+    // If we have Ultimate Jungle package, we use its info for hero if not explicitly set
+    const ultimatePkg = currentPackages.find(p => p.code === 'ULTIMATE-JUNGLE');
+
+    if (ultimatePkg && !hero.title) {
       const titleEl = document.getElementById('heroTitle');
-      if (titleEl) titleEl.innerHTML = data.hero_text;
+      if (titleEl) titleEl.innerHTML = ultimatePkg.title.replace(' ', '<br />');
+      const subEl = document.getElementById('heroTagline');
+      if (subEl) subEl.textContent = ultimatePkg.subtitle || ultimatePkg.description;
+    } else {
+      if (hero.title) {
+        const el = document.getElementById('heroTitle');
+        if (el) el.innerHTML = hero.title;
+      }
+      if (hero.tagline) {
+        const el = document.getElementById('heroTagline');
+        if (el) el.textContent = hero.tagline;
+      }
     }
-    const waNum = data.whatsapp_number || '';
-    const cleanWa = waNum.replace(/\D/g, '');
-    const waEl = document.getElementById('quickWhatsapp');
-    if (waEl) waEl.textContent = waNum;
-    const emailEl = document.getElementById('quickEmail');
-    if (emailEl) emailEl.textContent = data.email || '';
-    const locEl = document.getElementById('quickLocation');
-    if (locEl) locEl.textContent = data.map_location || '';
+
+    if (hero.cta_text) {
+      const el = document.getElementById('heroCtaText');
+      if (el) el.textContent = hero.cta_text;
+    }
+
+    if (hero.bg_url) {
+      const video = document.querySelector('.hero-video-bg video');
+      if (video) {
+        const source = video.querySelector('source');
+        if (source) {
+          source.src = hero.bg_url;
+          video.load();
+        }
+      }
+    }
+
+    // 4) INTRO BINDING
+    const intro = data.intro || {};
+    if (intro.title) {
+      const el = document.getElementById('introTitle');
+      if (el) el.textContent = intro.title;
+    }
+    if (intro.text) {
+      const el = document.getElementById('introText');
+      if (el) el.textContent = intro.text;
+    }
+
+    // 5) ACTIVITIES BINDING
+    const act = data.activities || {};
+    if (act.title) {
+      const el = document.getElementById('activitiesTitle');
+      if (el) el.textContent = act.title;
+    }
+    if (act.subtitle) {
+      const el = document.getElementById('activitiesSubtitle');
+      if (el) el.textContent = act.subtitle;
+    }
+
+    // 6) PACKAGES BINDING
+    const pkg = data.packages || {};
+    if (pkg.title) {
+      const el = document.getElementById('packagesTitle');
+      if (el) el.textContent = pkg.title;
+    }
+    if (pkg.subtitle) {
+      const el = document.getElementById('packagesSubtitle');
+      if (el) el.textContent = pkg.subtitle;
+    }
+
+    // 7) GALLERY BINDING
+    const gal = data.gallery || {};
+    if (gal.title) {
+      const el = document.getElementById('galleryTitle');
+      if (el) el.textContent = gal.title;
+    }
+    if (gal.subtitle) {
+      const el = document.getElementById('gallerySubtitle');
+      if (el) el.textContent = gal.subtitle;
+    }
+    if (gal.cta) {
+      const el = document.getElementById('galleryCtaText');
+      if (el) el.textContent = gal.cta;
+    }
+
+    // Trigger dependent loads with new limits
+    await loadPackages(); // Move this UP to ensure currentPackages is populated
+    loadActivities();
+    loadGallery();
+    loadRooms();
+
   } catch (err) { console.error("Failed to load settings", err); }
 }
 
@@ -226,19 +407,59 @@ async function loadPackages() {
   try {
     const res = await fetch('/api/packages');
     const data = await res.json();
+
+    // Prioritize Ultimate Jungle Experience
+    data.sort((a, b) => {
+      if (a.code === 'ULTIMATE-JUNGLE') return -1;
+      if (b.code === 'ULTIMATE-JUNGLE') return 1;
+      return 0;
+    });
+
     currentPackages = data;
     const packageGrid = document.getElementById("packageGrid");
-    if (packageGrid) packageGrid.innerHTML = data.map(packageCard).join("");
+    if (packageGrid) {
+      packageGrid.innerHTML = data.map(packageCard).join("");
+      // Add delegated click handler for package cards
+      packageGrid.addEventListener('click', handlePackageCardClick);
+    }
     const packageSelect = document.getElementById("packageSelect");
     if (packageSelect) {
       packageSelect.innerHTML = '<option value="" disabled selected>Select a package</option>';
       data.forEach(pkg => {
         const o = document.createElement("option");
         o.value = pkg.id; o.textContent = pkg.title;
+        if (pkg.code === 'ULTIMATE-JUNGLE') o.selected = true;
         packageSelect.appendChild(o);
       });
     }
   } catch (err) { console.error("Failed to load packages", err); }
+}
+
+
+
+async function loadRooms() {
+  try {
+    const res = await fetch('/api/rooms');
+    const data = await res.json();
+    const productGrid = document.getElementById("productGrid");
+    if (!productGrid) return;
+
+    // Group rooms by zone to show zones as products
+    const zones = [...new Set(data.map(r => r.zone))];
+    productGrid.innerHTML = zones.map(zone => {
+      const count = data.filter(r => r.zone === zone).length;
+      return `
+            <div class="col-12 col-md-6 col-lg-3">
+              <div class="glass-card p-4 text-center h-100 reveal" data-aos="fade-up">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏡</div>
+                <h3 class="h5 fw-bold">Zone ${zone}</h3>
+                <p class="text-muted-soft small mb-3">${count} Bungalows available</p>
+                <a href="booking.html?type=room" class="btn btn-mini btn-outline-light w-100 mt-auto">Book Room</a>
+              </div>
+            </div>
+         `;
+    }).join("");
+  } catch (err) { console.error("Failed to load rooms", err); }
 }
 
 async function loadActivities() {
@@ -248,9 +469,9 @@ async function loadActivities() {
     currentActivities = data;
     const grid = document.getElementById("activitiesGrid");
     if (grid) {
-      // If on index page (has carousel nav), limit and init carousel
       const isIndex = !!document.getElementById('actNext');
-      const displayedItems = isIndex ? data.slice(0, ACTIVITIES_LIMIT) : data;
+      const limit = parseInt(siteSettings?.activities?.limit || 6);
+      const displayedItems = isIndex ? data.slice(0, limit) : data;
       grid.innerHTML = displayedItems.map(activityCard).join("");
       if (isIndex) initActivitiesCarousel();
     }
@@ -261,8 +482,12 @@ async function loadGallery() {
   try {
     const res = await fetch('/api/gallery');
     const data = await res.json();
-    currentGallery = data;
-    renderGallery('all');
+    currentGallery = data; // Now stores Albums
+
+    // Check for URL filter
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterParam = urlParams.get('filter') || 'all';
+    renderGallery(filterParam);
   } catch (err) { console.error("Failed to load gallery", err); }
 }
 
@@ -270,15 +495,27 @@ function renderGallery(filter = 'all') {
   const grid = document.getElementById("galleryGrid");
   if (!grid) return;
 
-  let filtered = filter === 'all' ? currentGallery : currentGallery.filter(i => i.category.toLowerCase() === filter.toLowerCase());
+  let allImages = [];
+  currentGallery.forEach(album => {
+    // Exact category match or 'all'
+    if (filter === 'all' || album.category.toLowerCase() === filter.toLowerCase()) {
+      (album.images || []).forEach(img => {
+        allImages.push({
+          image_url: img.image_url,
+          album_title: album.title,
+          category: album.category
+        });
+      });
+    }
+  });
 
-  // If on home page (detected by View More button existence), limit items
-  const isHome = !!document.querySelector('.view-more-wrap');
+  const isHome = !!document.querySelector('.home-gallery');
   if (isHome) {
-    filtered = filtered.slice(0, GALLERY_LIMIT);
+    const limit = parseInt(siteSettings?.gallery?.limit || 6);
+    allImages = allImages.slice(0, limit);
   }
 
-  grid.innerHTML = filtered.map(galleryItem).join("");
+  grid.innerHTML = allImages.map(galleryItem).join("");
   if (typeof GLightbox !== 'undefined') GLightbox({ selector: ".glightbox" });
 }
 
@@ -294,7 +531,7 @@ function initActivitiesCarousel() {
   if (cards.length === 0) return;
 
   const updateCarousel = () => {
-    const cardWidth = cards[0].offsetWidth + 16; // width + gap
+    const cardWidth = (cards[0].offsetWidth || 300) + 16;
     const visibleCards = getVisibleCardsCount();
     const maxIndex = Math.max(0, cards.length - visibleCards);
 
@@ -338,16 +575,14 @@ function initActivitiesCarousel() {
 
   function handleSwipe() {
     const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 50) { // threshold
+    if (Math.abs(diff) > 50) {
       if (diff > 0) {
-        // swipe left -> next
         const visibleCards = getVisibleCardsCount();
         if (actCurrentIndex < cards.length - visibleCards) {
           actCurrentIndex++;
           updateCarousel();
         }
       } else {
-        // swipe right -> prev
         if (actCurrentIndex > 0) {
           actCurrentIndex--;
           updateCarousel();
@@ -361,34 +596,139 @@ function initActivitiesCarousel() {
 }
 
 function packageCard(p) {
-  const imgUrl = p.image_path ? `/storage/${p.image_path}` : 'https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80';
-  const badge = p.is_best_offer ? 'BEST OFFER' : 'HOT';
+  const imgUrl = p.image_url || 'https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80';
+  const isUltimate = p.code === 'ULTIMATE-JUNGLE';
+  const badge = isUltimate ? '🌟 FEATURED' : (p.is_best_offer ? 'BEST OFFER' : 'HOT');
+
   return `
-    <div class="col-12 col-lg-4">
-      <div class="img-card">
-        <img src="${imgUrl}" alt="${p.title}">
-        <div class="img-overlay">
-          <div class="img-overlay-title">${badge} • THB ${new Intl.NumberFormat().format(p.price_thb)}</div>
-          <div class="img-overlay-sub">${p.title}</div>
-        </div>
-      </div>
-      <div class="glass-card p-3 mt-2">
-        <div class="fw-bold">${p.title}</div>
-        <div class="text-muted-soft small mt-1">${p.subtitle || p.description.substring(0, 100) + '...'}</div>
-        <div class="d-flex gap-2 mt-3 flex-wrap">
-          <button class="btn btn-danger fw-bold" onclick="goToBookingPage({ package_id: '${p.id}', adults: 2, children: 0 })">Reserve</button>
-          <a class="btn btn-outline-light fw-bold" href="#gallery">See Photos</a>
+    <div class="col-12 ${isUltimate ? 'col-lg-8 offset-lg-2' : 'col-lg-4'} mb-4">
+      <div class="glass-card overflow-hidden h-100 ${isUltimate ? 'border-primary' : ''} package-card" data-slug="${p.slug}" style="cursor: pointer;">
+        <div class="row g-0 h-100">
+          <div class="${isUltimate ? 'col-md-5' : 'col-12'}">
+            <div class="img-card h-100" style="border-radius:0; border:none;">
+              <img src="${imgUrl}" alt="${p.title}" style="height: ${isUltimate ? '100%' : '240px'}; min-height: 240px; object-fit: cover;">
+              <div class="img-overlay" style="bottom: auto; top: 0;">
+                <div class="img-overlay-title">${badge} • THB ${new Intl.NumberFormat().format(p.price_thb)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="${isUltimate ? 'col-md-7' : 'col-12'} p-4 d-flex flex-column">
+              <h2 class="h4 fw-bold mb-1">${p.title}</h2>
+              <p class="text-secondary small mb-3">${p.subtitle || ''}</p>
+              <p class="text-muted-soft small">${p.description}</p>
+              <div class="mt-auto d-flex gap-2 pt-4 flex-wrap">
+                <span class="btn btn-danger fw-bold px-4">View Full Details</span>
+                <a class="btn btn-outline-light fw-bold" href="#gallery">Gallery</a>
+              </div>
+          </div>
         </div>
       </div>
     </div>
   `;
 }
 
+// Global modal state
+let activePackage = null;
+let selectedOptions = [];
+
+window.openPackageModal = (id) => {
+  const p = currentPackages.find(x => x.id == id);
+  if (!p) return;
+  activePackage = p;
+  selectedOptions = [];
+
+  document.getElementById('mdlPkgTitle').textContent = p.title;
+  document.getElementById('mdlPkgSubtitle').textContent = p.subtitle || '';
+  document.getElementById('mdlPkgImage').src = p.image_url || '';
+  document.getElementById('mdlPkgDesc').textContent = p.description;
+  document.getElementById('mdlPkgPrice').textContent = 'THB ' + new Intl.NumberFormat().format(p.price_thb);
+
+  // Timeline
+  const timeline = document.getElementById('mdlItineraryTimeline');
+  timeline.innerHTML = (p.itineraries || []).map(it => `
+        <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+                <div class="timeline-day">Day ${it.day_no}</div>
+                <div class="timeline-title">${it.title}</div>
+                <div class="timeline-desc small">${it.description}</div>
+            </div>
+        </div>
+    `).join('');
+
+  // Options
+  const optSection = document.getElementById('mdlOptionsSection');
+  const optGrid = document.getElementById('mdlOptionsGrid');
+  if (p.options && p.options.length > 0) {
+    optSection.classList.remove('d-none');
+    optGrid.innerHTML = p.options.map(opt => `
+            <div class="col-6">
+                <label class="option-pill" onclick="togglePackageOption(this, '${opt.id}')">
+                    <input type="checkbox" value="${opt.id}">
+                    ${opt.name}
+                </label>
+            </div>
+        `).join('');
+  } else {
+    optSection.classList.add('d-none');
+  }
+
+  document.getElementById('packageDetailModal').classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closePackageModal = () => {
+  document.getElementById('packageDetailModal').classList.remove('is-open');
+  document.body.style.overflow = '';
+};
+
+window.togglePackageOption = (el, id) => {
+  const idx = selectedOptions.indexOf(id);
+  if (idx > -1) {
+    selectedOptions.splice(idx, 1);
+    el.classList.remove('active');
+  } else {
+    selectedOptions.push(id);
+    el.classList.add('active');
+  }
+  document.getElementById('mdlOptionsError').style.display = 'none';
+};
+
+window.continueToHeroBooking = () => {
+  // Validate exactly 2 options if Ultimate
+  if (activePackage.code === 'ULTIMATE-JUNGLE' && selectedOptions.length !== 2) {
+    document.getElementById('mdlOptionsError').style.display = 'block';
+    return;
+  }
+
+  // Set value in hero form
+  const sel = document.getElementById('packageSelect');
+  if (sel) sel.value = activePackage.id;
+
+  // Store options in hidden input
+  const optInput = document.getElementById('heroPackageOptions');
+  if (optInput) optInput.value = selectedOptions.join(',');
+
+  closePackageModal();
+
+  // Scroll to hero
+  document.getElementById('heroBookingForm')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
 function activityCard(a) {
+  const imgUrl = a.cover_image_url || '';
+  const mediaContent = imgUrl ? `<img src="${imgUrl}" alt="${a.title}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 3rem;">🌴</div>';
+
+  // Mapping activity categories/titles to gallery filters if possible
+  // For now, we route to gallery with a filter if it matches one of the known ones
+  const galleryFilter = a.title.toLowerCase().includes('lake') ? 'lake' :
+    a.title.toLowerCase().includes('trek') ? 'jungle' :
+      a.title.toLowerCase().includes('elephant') ? 'elephant' : 'all';
+
   return `
     <article class="cardx">
-      <div class="cardx-media" style="height: 200px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05);">
-        <div style="font-size: 3rem;">🌴</div>
+      <div class="cardx-media" style="height: 200px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); overflow: hidden;">
+        ${mediaContent}
         <div class="cardx-tag">TOUR</div>
         ${a.price_thb ? `<div class="cardx-price">THB ${new Intl.NumberFormat().format(a.price_thb)}</div>` : ''}
       </div>
@@ -397,20 +737,49 @@ function activityCard(a) {
         <h3 class="cardx-title">${a.title}</h3>
         <p class="cardx-desc" style="font-size: 0.85rem; color: var(--muted);">${a.description}</p>
         <div class="cardx-actions">
-          <button class="btn btn-danger btn-mini w-100" onclick="goToBookingPage({ booking_type: 'tour', activity_id: '${a.id}' })">Book</button>
+          <a class="btn btn-danger btn-mini w-100" href="gallery.html?filter=${galleryFilter}">View Gallery / Explore</a>
         </div>
       </div>
     </article>
   `;
 }
 
-function galleryItem(item, i) {
-  const imgUrl = `/storage/${item.image_path}`;
+function galleryItem(item) {
+  const imgUrl = item.image_url;
   return `
     <a class="g-item glightbox" href="${imgUrl}" data-gallery="resort">
-      <img src="${imgUrl}" alt="Gallery Image">
+      <img src="${imgUrl}" alt="Gallery Image" loading="lazy">
+      <div class="g-item-overlay">
+          <div class="g-item-info">
+            <span class="g-item-category">${item.category || 'RESORT'}</span>
+            <h3 class="g-item-title">${item.album_title}</h3>
+          </div>
+          <div class="g-item-cta">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+          </div>
+      </div>
     </a>
   `;
+}
+
+// Handler for package card clicks
+function handlePackageCardClick(e) {
+  // Find the package card element (could be a child element that was clicked)
+  const card = e.target.closest('.package-card');
+  if (!card) return;
+
+  // Ignore clicks on anchor links (like the gallery link)
+  if (e.target.closest('a[href^="#"]')) {
+    return;
+  }
+
+  // Get the slug and redirect
+  const slug = card.dataset.slug;
+  if (slug) {
+    window.location.href = `package-details.html?slug=${slug}`;
+  }
 }
 
 window.goToBookingPage = (data = {}) => {
@@ -425,5 +794,17 @@ window.goToBookingPage = (data = {}) => {
   if (data.check_out) params.set('checkout', data.check_out);
   if (data.adults) params.set('adults', data.adults);
   if (data.children) params.set('children', data.children);
+  if (data.package_options) params.set('options', data.package_options);
   window.location.href = `booking.html?${params.toString()}`;
 };
+
+// Scroll Progress Bar Initialization
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress__bar');
+  if (!bar) return;
+  
+  window.addEventListener('scroll', () => {
+    const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    bar.style.width = Math.min(pct, 100) + '%';
+  }, { passive: true });
+}

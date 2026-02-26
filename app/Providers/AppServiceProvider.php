@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Intentionally disabled to avoid duplicate booking emails being triggered
+        // from multiple sources (controller + observer + model callbacks).
+        // Booking notifications are now handled in explicit request/action flows.
     }
 }

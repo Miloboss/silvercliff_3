@@ -13,14 +13,38 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 
+use Illuminate\Database\Eloquent\Model;
+
 class BookingResource extends Resource
 {
     protected static ?string $model = Booking::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin', 'staff']) ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin', 'staff']) ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
+    }
+
     public static function form(Form $form): Form
     {
+        $isStaff = auth()->user()?->hasRole('staff') && !auth()->user()?->hasAnyRole(['super_admin', 'admin']);
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Core Information')
@@ -36,7 +60,8 @@ class BookingResource extends Resource
                                 'package' => 'Package Booking',
                             ])
                             ->required()
-                            ->reactive(),
+                            ->reactive()
+                            ->disabled($isStaff),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
@@ -45,22 +70,25 @@ class BookingResource extends Resource
                             ])
                             ->required()
                             ->default('pending'),
-                        Forms\Components\Select::make('source')
-                            ->options([
-                                'website' => 'Website',
-                                'bookingcom' => 'Booking.com',
-                                'walkin' => 'Walk-in',
-                            ])
-                            ->required()
-                            ->default('website'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Financial Info (Reporting Only)')
+                    ->schema([
+                        Forms\Components\TextInput::make('total_amount')
+                            ->numeric()
+                            ->prefix('THB')
+                            ->readOnly()
+                            ->helperText('Calculation handle on server. This is expected revenue.'),
+                    ]),
+                
+                // Detail Sections
 
                 Forms\Components\Section::make('Guest Details')
                     ->schema([
-                        Forms\Components\TextInput::make('full_name')->required(),
-                        Forms\Components\TextInput::make('whatsapp')->required()->tel(),
-                        Forms\Components\TextInput::make('email')->email(),
-                        Forms\Components\Textarea::make('notes')->columnSpanFull(),
+                        Forms\Components\TextInput::make('full_name')->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('whatsapp')->required()->tel()->disabled($isStaff),
+                        Forms\Components\TextInput::make('email')->email()->disabled($isStaff),
+                        Forms\Components\Textarea::make('notes')->columnSpanFull()->disabled($isStaff),
                     ])->columns(2),
 
                 // Detail Sections
@@ -68,10 +96,10 @@ class BookingResource extends Resource
                     ->relationship('roomDetail')
                     ->visible(fn (callable $get) => $get('booking_type') === 'room')
                     ->schema([
-                        Forms\Components\DatePicker::make('check_in')->required(),
-                        Forms\Components\DatePicker::make('check_out')->required(),
-                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required(),
-                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required(),
+                        Forms\Components\DatePicker::make('check_in')->required()->disabled($isStaff),
+                        Forms\Components\DatePicker::make('check_out')->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required()->disabled($isStaff),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Tour Details')
@@ -80,11 +108,12 @@ class BookingResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('activity_id')
                             ->relationship('activity', 'title')
-                            ->required(),
-                        Forms\Components\DatePicker::make('tour_date')->required(),
-                        Forms\Components\TimePicker::make('tour_time'),
-                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required(),
-                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required(),
+                            ->required()
+                            ->disabled($isStaff),
+                        Forms\Components\DatePicker::make('tour_date')->required()->disabled($isStaff),
+                        Forms\Components\TimePicker::make('tour_time')->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required()->disabled($isStaff),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Package Details')
@@ -93,12 +122,23 @@ class BookingResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('package_id')
                             ->relationship('package', 'title')
-                            ->required(),
-                        Forms\Components\DatePicker::make('check_in')->required(),
-                        Forms\Components\DatePicker::make('check_out')->required(),
-                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required(),
-                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required(),
+                            ->required()
+                            ->disabled($isStaff),
+                        Forms\Components\DatePicker::make('check_in')->required()->disabled($isStaff),
+                        Forms\Components\DatePicker::make('check_out')->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_adults')->numeric()->default(1)->required()->disabled($isStaff),
+                        Forms\Components\TextInput::make('guests_children')->numeric()->default(0)->required()->disabled($isStaff),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Package Add-ons')
+                    ->visible(fn (callable $get) => $get('booking_type') === 'package')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('packageOptions')
+                            ->relationship('packageOptions', 'name')
+                            ->columns(2)
+                            ->columnSpanFull()
+                            ->helperText('Select any add-on options for this package.'),
+                    ]),
             ]);
     }
 
@@ -128,6 +168,12 @@ class BookingResource extends Resource
                     ->searchable()
                     ->description(fn (Booking $record): string => $record->whatsapp . ($record->email ? " | {$record->email}" : "")),
                 
+                Tables\Columns\TextColumn::make('packageOptions.name')
+                    ->label('Selected Options')
+                    ->badge()
+                    ->color('warning')
+                    ->listWithLineBreaks(),
+                
                 Tables\Columns\TextColumn::make('guests')
                     ->getStateUsing(function (Booking $record): string {
                         $details = match ($record->booking_type) {
@@ -156,6 +202,11 @@ class BookingResource extends Resource
                     ->badge()
                     ->color('info')
                     ->placeholder('None'),
+                
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->money('THB')
+                    ->sortable()
+                    ->summarize(Tables\Columns\Summarizers\Sum::make()->money('THB')),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -200,21 +251,124 @@ class BookingResource extends Resource
                         'confirmed' => 'Confirmed',
                         'cancelled' => 'Cancelled',
                     ]),
+                Tables\Filters\TernaryFilter::make('staying')
+                    ->label('Staying Now')
+                    ->placeholder('All bookings')
+                    ->trueLabel('Staying guests')
+                    ->falseLabel('Not staying')
+                    ->queries(
+                        true: fn (Builder $query) => $query->where('status', 'confirmed')
+                            ->where(function ($q) {
+                                $today = now()->toDateString();
+                                $q->whereHas('roomDetail', fn($sq) => $sq->where('check_in', '<=', $today)->where('check_out', '>', $today))
+                                  ->orWhereHas('packageDetail', fn($sq) => $sq->where('check_in', '<=', $today)->where('check_out', '>', $today));
+                            }),
+                        false: fn (Builder $query) => $query,
+                    ),
             ])
             ->actions([
-                Tables\Actions\Action::make('confirm')
-                    ->label('Confirm')
+                Tables\Actions\Action::make('downloadVoucher')
+                    ->label('Download Voucher')
                     ->color('success')
-                    ->icon('heroicon-o-check')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->url(fn (Booking $record): string => route('bookings.download-voucher', $record))
+                    ->openUrlInNewTab(),
+                Tables\Actions\Action::make('confirm')
+                    ->label('Confirm & Send Voucher')
+                    ->color('success')
+                    ->icon('heroicon-o-envelope')
                     ->hidden(fn (Booking $record) => $record->status === 'confirmed')
-                    ->action(fn (Booking $record) => $record->update(['status' => 'confirmed']))
-                    ->requiresConfirmation(),
+                    ->requiresConfirmation()
+                    ->modalHeading('Confirm Booking')
+                    ->modalDescription('This will mark the booking as confirmed and email the guest a confirmation with the PDF voucher attached.')
+                    ->action(function (Booking $record) {
+                        try {
+                            $result = Booking::confirmAndQueueGuestVoucher($record->id);
+
+                            $bookingCode = $result['booking']?->booking_code;
+
+                            if ($result['state'] === 'queued') {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Booking confirmed')
+                                    ->body("Confirmation email queued for booking {$bookingCode}.")
+                                    ->success()
+                                    ->send();
+                                return;
+                            }
+
+                            if ($result['state'] === 'already_sent') {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Already processed')
+                                    ->body("Confirmation email was already sent for booking {$bookingCode}.")
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+
+                            if ($result['state'] === 'template_disabled') {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Booking confirmed')
+                                    ->body('Guest confirmation template is disabled. Enable it to send email.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+
+                            if ($result['state'] === 'no_email') {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Booking confirmed')
+                                    ->body("No guest email available for booking {$bookingCode}.")
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::error("Confirmation email failed for {$record->booking_code}: " . $e->getMessage());
+                            \Filament\Notifications\Notification::make()
+                                ->title('Failed to send confirmation email.')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                
+                Tables\Actions\Action::make('resend_voucher')
+                    ->label('Resend Voucher')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('gray')
+                    ->hidden(fn (Booking $record) => $record->status !== 'confirmed')
+                    ->requiresConfirmation()
+                    ->action(function (Booking $record) {
+                        try {
+                            if ($record->email) {
+                                $mail = \App\Mail\TemplatedMail::make('booking_confirmation_guest', $record, true);
+                                if ($mail) {
+                                    \Illuminate\Support\Facades\Mail::to($record->email)->queue($mail);
+                                    \Illuminate\Support\Facades\Log::info("Resent confirmation email queued with voucher to {$record->email} (Booking: {$record->booking_code})");
+                                    \Filament\Notifications\Notification::make()->title('Voucher resend queued!')->success()->send();
+                                } else {
+                                    \Filament\Notifications\Notification::make()->title('Email Template not enabled.')->warning()->send();
+                                }
+                            } else {
+                                \Filament\Notifications\Notification::make()->title('No email on file to send voucher.')->warning()->send();
+                            }
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::error("Resend confirmation email failed for {$record->booking_code}: " . $e->getMessage());
+                            \Filament\Notifications\Notification::make()
+                                ->title('Failed to resend email.')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\Action::make('cancel')
                     ->label('Cancel')
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->hidden(fn (Booking $record) => $record->status === 'cancelled')
-                    ->action(fn (Booking $record) => $record->update(['status' => 'cancelled']))
+                    ->action(fn (Booking $record) => $record->update([
+                        'status' => 'cancelled',
+                    ]))
                     ->requiresConfirmation(),
                 Tables\Actions\EditAction::make(),
             ])

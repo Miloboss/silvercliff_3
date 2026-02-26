@@ -1,0 +1,134 @@
+/* 
+ * Document isolation CSS for Invoices/Vouchers
+ * Optimized for both Browser Preview and DomPDF
+ */
+
+.doc-isolated-container {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #333333;
+    line-height: 1.5;
+    background-color: #ffffff;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+}
+
+.doc-header {
+    border-bottom: 2px solid #2d5a27;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.doc-logo-img {
+    height: 48px;
+    width: auto;
+    margin-bottom: 10px;
+}
+
+.doc-brand-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2d5a27;
+    margin: 0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.doc-tagline {
+    font-size: 12px;
+    color: #666666;
+    margin: 5px 0 0 0;
+    letter-spacing: 2px;
+    font-weight: normal;
+}
+
+.doc-title-box {
+    margin-top: 20px;
+    background-color: #f4f7f4;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.doc-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2d5a27;
+    margin: 0;
+    text-align: center;
+}
+
+.doc-section {
+    margin-bottom: 25px;
+}
+
+.doc-section-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2d5a27;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 5px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.doc-label {
+    width: 160px;
+    font-weight: bold;
+    color: #555555;
+    padding: 6px 0;
+    vertical-align: top;
+    font-size: 13px;
+}
+
+.doc-value {
+    padding: 6px 0;
+    vertical-align: top;
+    font-size: 13px;
+}
+
+.doc-total-box {
+    margin-top: 20px;
+    border-top: 2px solid #2d5a27;
+    padding-top: 15px;
+    text-align: right;
+}
+
+.doc-total-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.doc-total-amount {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2d5a27;
+}
+
+.doc-footer {
+    margin-top: 50px;
+    border-top: 1px solid #eeeeee;
+    padding-top: 20px;
+    text-align: center;
+    font-size: 11px;
+    color: #888888;
+}
+
+.doc-footer p {
+    margin: 4px 0;
+}
+
+.doc-note {
+    background-color: #f9f9f9;
+    border-left: 4px solid #8cb33a;
+    padding: 12px;
+    font-size: 12px;
+    font-style: italic;
+    margin-top: 15px;
+}

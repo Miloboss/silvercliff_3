@@ -1,0 +1,543 @@
+/* ============================================================
+   rooms.css — Rooms & Room Details pages
+   Scoped to rooms-specific components only.
+   Does NOT override global styles.css rules.
+   ============================================================ */
+
+/* ── Rooms Hero ─────────────────────────────────────────────── */
+.rooms-hero {
+    position: relative;
+    min-height: 65vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+.rooms-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.rooms-hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+}
+
+.rooms-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+            rgba(5, 10, 4, 0.45) 0%,
+            rgba(5, 10, 4, 0.3) 40%,
+            rgba(5, 10, 4, 0.85) 100%);
+}
+
+.rooms-hero-inner {
+    position: relative;
+    z-index: 2;
+    padding-bottom: 72px;
+    padding-top: 120px;
+}
+
+/* ── Rooms Grid (desktop) ───────────────────────────────────── */
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+@media (min-width: 1200px) {
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 28px;
+    }
+}
+
+/* ── Rooms Carousel (mobile) ────────────────────────────────── */
+.rooms-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+    padding: 8px 4px 24px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.rooms-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.rooms-carousel-item {
+    flex: 0 0 88%;
+    scroll-snap-align: center;
+    min-width: 0;
+}
+
+/* ── Room Card ──────────────────────────────────────────────── */
+.room-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+
+.room-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 28px 55px rgba(0, 0, 0, 0.5), 0 0 24px rgba(45, 90, 39, 0.2);
+}
+
+.room-card-img {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.room-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease);
+}
+
+.room-card:hover .room-card-img img {
+    transform: scale(1.06);
+}
+
+.room-card-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    color: #fff;
+}
+
+.room-card-count {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(45, 90, 39, 0.7);
+    border: 1px solid rgba(140, 179, 58, 0.3);
+    color: var(--accent);
+}
+
+.room-card-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.room-card-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin: 0;
+    color: #fff;
+}
+
+.room-card-sub {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.room-card-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.room-highlight-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(45, 90, 39, 0.25);
+    border: 1px solid rgba(140, 179, 58, 0.2);
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.room-card-price {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--gold);
+    margin-top: auto;
+}
+
+.room-card-per {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--muted);
+}
+
+.room-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.room-card-actions .btn {
+    flex: 1;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+/* ── Room Details Hero ──────────────────────────────────────── */
+.rd-hero {
+    position: relative;
+    min-height: 70vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+.rd-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.rd-hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
+}
+
+.rd-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+            rgba(5, 10, 4, 0.3) 0%,
+            rgba(5, 10, 4, 0.2) 40%,
+            rgba(5, 10, 4, 0.92) 100%);
+}
+
+.rd-hero-inner {
+    position: relative;
+    z-index: 2;
+    padding-bottom: 60px;
+    padding-top: 120px;
+}
+
+.rd-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.rd-back-link:hover {
+    color: var(--secondary);
+}
+
+/* ── Highlights Bar ─────────────────────────────────────────── */
+.rd-highlights-bar {
+    background: rgba(10, 20, 10, 0.8);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 0;
+    backdrop-filter: blur(12px);
+}
+
+.rd-highlights-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    justify-content: center;
+}
+
+.rd-highlight-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    padding: 6px 0;
+}
+
+.rd-highlight-icon {
+    font-size: 18px;
+}
+
+.rd-highlight-label {
+    white-space: nowrap;
+}
+
+/* ── Gallery Grid ───────────────────────────────────────────── */
+.rd-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 576px) {
+    .rd-gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.rd-gallery-item {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    display: block;
+    border: 1px solid var(--line);
+    cursor: pointer;
+}
+
+.rd-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s var(--ease);
+    display: block;
+}
+
+.rd-gallery-item:hover img {
+    transform: scale(1.08);
+}
+
+.rd-gallery-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 10, 4, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.rd-gallery-item:hover .rd-gallery-overlay {
+    opacity: 1;
+}
+
+/* ── Amenities Grid ─────────────────────────────────────────── */
+.rd-amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+@media (min-width: 576px) {
+    .rd-amenities-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.rd-amenity-item {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line);
+}
+
+/* ── Policy Cards ───────────────────────────────────────────── */
+.rd-policy-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+}
+
+.rd-policy-icon {
+    font-size: 1.5rem;
+    margin-bottom: 6px;
+}
+
+.rd-policy-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.rd-policy-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ── Sidebar Price ──────────────────────────────────────────── */
+.rd-price {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1.1;
+}
+
+.rd-sidebar-sticky {
+    position: sticky;
+    top: 90px;
+}
+
+/* ── Floating Action Button ─────────────────────────────────── */
+.rd-fab {
+    position: fixed;
+    bottom: 28px;
+    right: 24px;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 30px rgba(45, 90, 39, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+.rd-fab:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 16px 40px rgba(45, 90, 39, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Reserve Panel (slide-in from bottom) ───────────────────── */
+.rd-reserve-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 10, 4, 0.75);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.rd-reserve-backdrop.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.rd-reserve-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    background: linear-gradient(165deg, #0f180d 0%, #0a1208 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px 28px 0 0;
+    padding: 0;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.rd-reserve-panel.is-open {
+    transform: translateY(0);
+}
+
+.rd-reserve-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: #0f180d;
+    border-radius: 28px 28px 0 0;
+    z-index: 2;
+}
+
+.rd-reserve-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.rd-reserve-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: rotate(90deg);
+}
+
+.rd-reserve-body {
+    padding: 24px;
+}
+
+/* On desktop, panel is hidden (sidebar handles booking) */
+@media (min-width: 992px) {
+
+    .rd-reserve-panel,
+    .rd-reserve-backdrop {
+        display: none !important;
+    }
+}
+
+/* ── Date inputs in rooms pages ─────────────────────────────── */
+.rd-reserve-body input[type="date"],
+.rd-sidebar-sticky input[type="date"] {
+    display: block;
+    height: 48px;
+    line-height: 48px;
+}
+
+/* ── Mobile tweaks ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+    .rooms-hero {
+        min-height: 55vh;
+    }
+
+    .rd-hero {
+        min-height: 55vh;
+    }
+
+    .rd-highlights-row {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+
+    .rd-highlights-row::-webkit-scrollbar {
+        display: none;
+    }
+}

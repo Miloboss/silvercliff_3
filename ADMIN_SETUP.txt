@@ -1,0 +1,63 @@
+SILVER CLIFF RESORT - ADMIN SETUP & SECURITY
+==========================================
+
+This system uses a secure bootstrap process for the initial Super Admin creation.
+Public registration is DISABLED.
+
+1. REQUIRED .ENV CONFIGURATION
+------------------------------
+Ensure the following keys are set in your .env file:
+
+APP_KEY=base64:...
+APP_URL=https://yourdomain.com
+ADMIN_BOOTSTRAP_TOKEN=generate_a_long_random_string_here
+
+* The ADMIN_BOOTSTRAP_TOKEN is required for the initial setup command.
+
+
+2. PRODUCTION DEPLOYMENT STEPS
+------------------------------
+Run these commands in order on your production server:
+
+# 1. Run migrations (force if in production)
+php artisan migrate --force
+
+# 2. Seed the basic roles (super_admin, admin, staff, content_manager)
+php artisan db:seed --class=RoleSeeder
+
+# 3. Bootstrap your Super Admin account
+# You will be prompted for the token or you can pass it via --token=
+php artisan admin:bootstrap
+
+# 4. Success! Login at:
+https://yourdomain.com/admin
+
+# 5. SECURITY POST-INSTALL:
+After creating your Super Admin, you should REMOVE or ROTATE the 
+ADMIN_BOOTSTRAP_TOKEN from your .env file.
+
+
+3. USER MANAGEMENT & ROLES
+--------------------------
+Only the 'super_admin' can access the 'User Management' (Administration) section.
+
+Roles & Permissions:
+- super_admin: Full access to everything.
+- admin: Manage bookings, rooms, packages, activities, gallery, site settings.
+- staff: View bookings and update booking status only. Cannot delete records.
+- content_manager: Manage gallery and activities only.
+
+Deactivating Users:
+- You can deactivate any user by unchecking 'is_active' in the User Resource.
+- Deactivated users will be immediately blocked from accessing the admin panel.
+
+
+4. TROUBLESHOOTING
+------------------
+- If Login Loops: Check that SESSION_DOMAIN, APP_URL, and SANCTUM_STATEFUL_DOMAINS 
+  are correctly configured for your production environment (HTTPS).
+- If Roles missing: Re-run 'php artisan db:seed --class=RoleSeeder'.
+- Clear Caches:
+  php artisan config:clear
+  php artisan cache:clear
+  php artisan optimize:clear

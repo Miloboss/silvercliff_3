@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rooms & Stays — Silver Cliff Resort</title>
+  <meta name="description"
+    content="Discover our jungle bungalows, cottages and family rooms at Silver Cliff Resort, Khao Sok. Wake up to the sounds of the rainforest." />
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- AOS -->
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+  <!-- GLightbox -->
+  <link href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" rel="stylesheet" />
+  <!-- Site styles -->
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- Rooms styles -->
+  <link rel="stylesheet" href="./rooms.css" />
+</head>
+
+<body>
+  <div class="scroll-progress" aria-hidden="true"><span class="scroll-progress__bar"></span></div>
+
+  <!-- NAVBAR -->
+  <header class="site-header">
+    <nav class="nav-wrap container">
+      <a class="brand" href="index.html" aria-label="Home">
+        <img src="./logo.png" alt="Silver Cliff Resort" class="brand-logo brand-img">
+        <div class="brand-text">
+          <div class="brand-title">Silver Cliff</div>
+          <div class="brand-sub">Khao Sok Resort</div>
+        </div>
+      </a>
+      <ul class="nav-links d-none d-lg-flex" aria-label="Primary navigation">
+        <li><a class="nav-link" href="index.html">Introduction</a></li>
+        <li><a class="nav-link active" href="rooms.html">Rooms</a></li>
+        <li><a class="nav-link" href="resort.html">The Resort</a></li>
+        <li><a class="nav-link" href="index.html#packages">Packages</a></li>
+        <li><a class="nav-link" href="index.html#gallery">Gallery</a></li>
+        <li><a class="nav-link" href="booking-status.html">Check Booking</a></li>
+        <li><a class="nav-link cta" href="booking.html?type=room">Book Now</a></li>
+      </ul>
+      <button class="menu-btn d-lg-none" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false"
+        aria-controls="mobileDrawer">
+        <svg class="menu-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+          <path class="line line1" d="M4 7h16" />
+          <path class="line line2" d="M4 12h16" />
+          <path class="line line3" d="M4 17h16" />
+        </svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="top">
+
+    <!-- HERO -->
+    <section class="rooms-hero">
+      <div class="rooms-hero-bg">
+        <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1600&q=80"
+          alt="Jungle bungalow" />
+        <div class="rooms-hero-overlay"></div>
+      </div>
+      <div class="container rooms-hero-inner">
+        <div data-aos="fade-up">
+          <div class="hero-badges mb-4">
+            <span class="badge-pill">🏡 4 Room Types</span>
+            <span class="badge-pill">🌿 Jungle Setting</span>
+            <span class="badge-pill">🌊 River Views</span>
+          </div>
+          <h1 class="hero-title">Rooms &amp; Stays</h1>
+          <p class="hero-sub" style="max-width:52ch;">
+            Sleep surrounded by ancient rainforest. Each room type offers a unique way to experience the wild heart of
+            Khao Sok — from intimate bungalows to spacious family retreats.
+          </p>
+          <a href="booking.html?type=room" class="btn btn-danger fw-bold px-5 py-3 mt-2">Check Availability</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROOMS GRID -->
+    <section class="section" id="rooms-list" style="padding: 60px 0;">
+      <div class="container">
+        <div class="section-head text-center mb-5" data-aos="fade-up">
+          <h2 class="section-title">Choose Your Stay</h2>
+          <p class="section-sub">All rooms include jungle views, private bathroom, and free Wi-Fi.</p>
+        </div>
+
+        <!-- Desktop grid / Mobile carousel wrapper -->
+        <div class="rooms-grid-wrap">
+          <!-- Desktop: 2-col grid -->
+          <div class="rooms-grid d-none d-md-grid" id="roomsGridDesktop">
+            <!-- Cards injected by JS -->
+          </div>
+          <!-- Mobile: scroll-snap carousel -->
+          <div class="rooms-carousel d-md-none" id="roomsCarouselMobile">
+            <!-- Cards injected by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY STAY -->
+    <section class="section" style="padding: 60px 0; background: rgba(27,61,23,0.15);">
+      <div class="container">
+        <div class="section-head text-center mb-5" data-aos="fade-up">
+          <h2 class="section-title">What's Included</h2>
+          <p class="section-sub">Every room at Silver Cliff comes with these essentials.</p>
+        </div>
+        <div class="row g-3 justify-content-center">
+          <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="0">
+            <div class="glass-card p-4 text-center h-100">
+              <div style="font-size:2rem;margin-bottom:12px;">🌿</div>
+              <div class="fw-bold mb-1">Jungle Views</div>
+              <div class="text-muted-soft small">Wake up to ancient rainforest</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="80">
+            <div class="glass-card p-4 text-center h-100">
+              <div style="font-size:2rem;margin-bottom:12px;">🚿</div>
+              <div class="fw-bold mb-1">Private Bathroom</div>
+              <div class="text-muted-soft small">Hot water, fresh towels daily</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="160">
+            <div class="glass-card p-4 text-center h-100">
+              <div style="font-size:2rem;margin-bottom:12px;">📶</div>
+              <div class="fw-bold mb-1">Free Wi-Fi</div>
+              <div class="text-muted-soft small">Throughout the property</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="240">
+            <div class="glass-card p-4 text-center h-100">
+              <div style="font-size:2rem;margin-bottom:12px;">🌅</div>
+              <div class="fw-bold mb-1">Pay on Arrival</div>
+              <div class="text-muted-soft small">Cash or Wise accepted</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <span>© <span id="year"></span> <span class="footer-brand-name">Silver Cliff Resort</span></span>
+          <span class="muted">Khao Sok, Surat Thani, Thailand</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Mobile Drawer -->
+  <div class="drawer" id="mobileDrawer" aria-hidden="true">
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <div class="brand">
+          <img src="./logo.png" alt="Silver Cliff Resort" class="brand-logo brand-img">
+          <div class="brand-text">
+            <div class="brand-title">Silver Cliff</div>
+            <div class="brand-sub">Khao Sok Resort</div>
+          </div>
+        </div>
+        <button class="drawer-close" id="drawerClose" aria-label="Close menu">✕</button>
+      </div>
+      <ul class="drawer-links" aria-label="Mobile navigation">
+        <li><a href="index.html" class="drawer-link">Home</a></li>
+        <li><a href="rooms.html" class="drawer-link active">Rooms</a></li>
+        <li><a href="resort.html" class="drawer-link">The Resort</a></li>
+        <li><a href="index.html#packages" class="drawer-link">Packages</a></li>
+        <li><a href="index.html#gallery" class="drawer-link">Gallery</a></li>
+        <li><a href="booking-status.html" class="drawer-link">Check Booking</a></li>
+      </ul>
+      <div class="drawer-foot">
+        <a class="btn btn-danger w-100 fw-bold" href="booking.html?type=room">Book Your Stay</a>
+        <p class="drawer-note">Pay on arrival · Free cancellation</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+  <script src="./rooms-ui.js"></script>
+  <script src="./site-settings.js"></script>
+</body>
+
+</html>

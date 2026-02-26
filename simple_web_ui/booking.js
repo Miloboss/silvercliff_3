@@ -15,6 +15,7 @@
         children: parseInt(urlParams.get('children')) || 0,
         tour_date: urlParams.get('checkin') || new Date().toISOString().split('T')[0],
         tour_time: urlParams.get('tour_time') || '',
+        selected_options: urlParams.get('options') ? urlParams.get('options').split(',') : [],
         packages: [],
         activities: []
     };
@@ -133,20 +134,74 @@
             summPrice.textContent = pkg ? 'THB ' + new Intl.NumberFormat().format(pkg.price_thb) : '--';
             summCheckIn.textContent = state.check_in;
             summCheckOut.textContent = state.check_out;
+
+            // Handle Options Visibility
+            const optionsContainer = document.getElementById('packageOptionsContainer');
+            const optionsGrid = document.getElementById('packageOptionsGrid');
+            if (optionsContainer && optionsGrid && pkg) {
+                if (pkg.options && pkg.options.length > 0) {
+                    optionsContainer.classList.remove('d-none');
+                    // Only re-render if package changed
+                    if (optionsGrid.dataset.pkgId != pkg.id) {
+                        optionsGrid.dataset.pkgId = pkg.id;
+                        optionsGrid.innerHTML = pkg.options.map(opt => `
+                            <div class="col-6">
+                                <label class="option-pill ${state.selected_options?.includes(opt.id.toString()) ? 'active' : ''}">
+                                    <input type="checkbox" name="package_options" value="${opt.id}" 
+                                        ${state.selected_options?.includes(opt.id.toString()) ? 'checked' : ''}
+                                        onchange="window.toggleBookingOption(this)">
+                                    ${opt.name}
+                                </label>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    optionsContainer.classList.add('d-none');
+                    optionsGrid.innerHTML = '';
+                    optionsGrid.dataset.pkgId = '';
+                }
+            }
         } else if (state.booking_type === 'tour') {
             const act = state.activities.find(a => a.id == state.activity_id);
             summTitle.textContent = act ? act.title : 'Selected Tour';
             summPrice.textContent = act && act.price_thb ? 'THB ' + new Intl.NumberFormat().format(act.price_thb) : 'Enquiry Only';
             summCheckIn.textContent = state.tour_date + (state.tour_time ? ' @ ' + state.tour_time : '');
+            document.getElementById('packageOptionsContainer')?.classList.add('d-none');
         } else {
             summTitle.textContent = 'Room Stay (Bungalow)';
             summPrice.textContent = 'Pay on arrival';
             summCheckIn.textContent = state.check_in;
             summCheckOut.textContent = state.check_out;
+            document.getElementById('packageOptionsContainer')?.classList.add('d-none');
         }
 
         summGuests.textContent = `${state.adults} Adults, ${state.children} Children`;
     }
+
+    window.toggleBookingOption = (el) => {
+        const val = el.value;
+        if (!state.selected_options) state.selected_options = [];
+
+        if (el.checked) {
+            state.selected_options.push(val);
+        } else {
+            state.selected_options = state.selected_options.filter(id => id !== val);
+        }
+
+        // Visual feedback
+        el.closest('.option-pill')?.classList.toggle('active', el.checked);
+
+        // Special validation for Ultimate Jungle
+        const pkg = state.packages.find(p => p.id == state.package_id);
+        if (pkg && pkg.code === 'ULTIMATE-JUNGLE') {
+            const validation = document.getElementById('optionsValidation');
+            if (state.selected_options.length !== 2) {
+                validation.style.display = 'block';
+            } else {
+                validation.style.display = 'none';
+            }
+        }
+    };
 
     // 7. Event Listeners
     function initListeners() {
@@ -211,9 +266,15 @@
                 payload.check_in = state.check_in;
                 payload.check_out = state.check_out;
             } else if (state.booking_type === 'package') {
+                const pkg = state.packages.find(p => p.id == state.package_id);
+                if (pkg && pkg.code === 'ULTIMATE-JUNGLE' && (state.selected_options?.length || 0) !== 2) {
+                    alert("Please select exactly 2 activities for the Ultimate Jungle Experience.");
+                    return;
+                }
                 payload.package_id = state.package_id;
                 payload.check_in = state.check_in;
                 payload.check_out = state.check_out;
+                payload.package_options = state.selected_options || [];
             } else if (state.booking_type === 'tour') {
                 payload.activity_id = state.activity_id;
                 payload.tour_date = state.tour_date;
@@ -228,20 +289,50 @@
                 });
                 const result = await res.json();
 
-                if (res.ok) {
-                    finalCodeDisplay.textContent = result.booking_code;
-                    const statusLink = document.getElementById('statusLink');
-                    if (statusLink) statusLink.href = `booking-status.html?code=${result.booking_code}`;
-                    successModal.classList.add('is-open');
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    alert("Error: " + (result.message || "Failed to submit booking. Check all fields."));
+                if (!res.ok) {
+                    if (res.status === 422) {
+                        let msg = result.message || "Validation failed.";
+                        if (result.errors) {
+                            msg += "\n" + Object.values(result.errors).flat().join("\n");
+                        }
+                        alert(msg);
+                    } else {
+                        alert("Booking Failed: " + (result.message || "Unknown error"));
+                    }
+                    throw new Error("API Error");
                 }
+
+                // Success – update button to permanent success state
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Request Sent';
+                    submitBtn.classList.remove('btn-danger');
+                    submitBtn.classList.add('btn-success');
+                    submitBtn.disabled = true;
+                }
+
+                const codeEl = document.getElementById('finalCode');
+                if (codeEl) codeEl.textContent = result.booking_code;
+
+                // Duplicate detection changes modal header
+                if (result.is_duplicate) {
+                    const modalTitle = document.querySelector('#successModal h2');
+                    if (modalTitle) modalTitle.textContent = "Booking Already Received";
+                }
+
+                const statusLink = document.getElementById('statusLink');
+                if (statusLink) statusLink.href = `booking-status.html?code=${result.booking_code}`;
+
+                successModal.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
             } catch (err) {
-                alert("Connection error. Please try again.");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Confirm & Send Request';
+                console.warn(err);
+                if (err.message && err.message !== "API Error") {
+                    alert(err.message);
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Confirm & Send Request';
+                }
             }
         });
     }

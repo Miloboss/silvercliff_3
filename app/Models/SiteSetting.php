@@ -6,4 +6,4 @@ use Illuminate\Database\Eloquent\Model;
 
 class SiteSetting extends Model
 {
-    protected $fillable = ['key', 'value'];}
+    protected $fillable = ['key', 'value', 'group', 'type', 'label'];}

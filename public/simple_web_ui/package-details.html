@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title id="pageTitle">Package Details — Silver Cliff Resort</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./package-details.css" />
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <header class="site-header">
+        <nav class="nav-wrap container">
+            <a class="brand" href="/simple_web_ui/index.html" aria-label="Home">
+                <img src="./logo.png" alt="Silver Cliff Resort" class="brand-logo">
+                <div class="brand-text">
+                    <div class="brand-title">Silver Cliff</div>
+                    <div class="brand-sub">The Real Jungle Experience</div>
+                </div>
+            </a>
+            <ul class="nav-links d-none d-lg-flex">
+                <li><a class="nav-link" href="./index.html#intro">Introduction</a></li>
+                <li><a class="nav-link" href="./rooms.html">Rooms</a></li>
+                <li><a class="nav-link" href="./index.html#packages">Packages</a></li>
+                <li><a class="nav-link" href="./booking-status.html">Check Booking</a></li>
+                <li><a class="nav-link cta" href="./booking.html">Book Now</a></li>
+            </ul>
+            <button class="menu-btn d-lg-none" id="menuBtn" type="button">
+                <svg class="menu-icon" viewBox="0 0 24 24" width="28" height="28">
+                    <path class="line line1" d="M4 7h16" />
+                    <path class="line line2" d="M4 12h16" />
+                    <path class="line line3" d="M4 17h16" />
+                </svg>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-spinner">
+            <div class="text-center">
+                <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted-soft">Loading package details...</p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="container py-5" style="display: none;">
+            <div class="alert alert-danger text-center"
+                style="background: rgba(220, 53, 69, 0.2); border: 2px solid rgba(220, 53, 69, 0.5); border-radius: 20px;">
+                <h3 class="mb-3">🌿 Package Not Found</h3>
+                <p class="mb-4">Sorry, we couldn't find the package you're looking for.</p>
+                <a href="./index.html#packages" class="btn btn-danger">Back to Packages</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="packageContent" style="display: none;">
+            <!-- HERO SECTION -->
+            <section class="package-hero" id="heroSection">
+                <div class="container" data-aos="fade-up">
+                    <div class="row align-items-center g-4">
+                        <div class="col-lg-8">
+                            <span class="badge-pill mb-3">🌟 Featured Experience</span>
+                            <h1 class="hero-title" id="packageTitle"></h1>
+                            <p class="hero-sub mb-4" id="packageSubtitle"></p>
+                        </div>
+                        <div class="col-lg-4 text-lg-end">
+                            <div class="price-tag d-inline-block">
+                                <div class="small text-muted-soft text-uppercase letter-spacing mb-2">Starting from
+                                </div>
+                                <div class="h2 fw-bold text-danger mb-1" id="packagePrice"></div>
+                                <div class="small text-muted-soft">per person / all-inclusive</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- JOURNEY OVERVIEW -->
+            <section class="section py-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-10 mx-auto" data-aos="fade-up">
+                            <div class="glass-card p-4 mb-4">
+                                <h2 class="h3 fw-bold mb-3">✨ Journey Overview</h2>
+                                <p class="text-muted-soft lead lh-lg" id="packageDescription"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DAY-BY-DAY TIMELINE WITH IMAGES -->
+            <section class="section pb-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-10 mx-auto" data-aos="fade-up">
+                            <h2 class="h3 fw-bold mb-4">📅 Your 4-Day Adventure</h2>
+
+                            <div class="timeline">
+                                <!-- Day 1 Section (Dynamic with Options) -->
+                                <div id="day1Container"></div>
+
+                                <!-- Day 2 Section (Lake Image) -->
+                                <div id="day2Container"></div>
+
+                                <!-- Day 3 Section -->
+                                <div id="day3Container"></div>
+
+                                <!-- Accommodation Section -->
+                                <div id="accommodationContainer"></div>
+
+                                <!-- Final Day Section -->
+                                <div id="finalDayContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WHAT'S INCLUDED -->
+            <section class="section py-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-10 mx-auto" data-aos="fade-up">
+                            <div class="glass-card p-4">
+                                <h2 class="h3 fw-bold mb-4">✅ What's Included</h2>
+                                <ul class="check-list row g-3" id="includesList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Booking Form Modal -->
+    <div id="bookingFormModal" class="booking-modal">
+        <div class="modal-overlay" onclick="closeBookingForm()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeBookingForm()">&times;</button>
+
+            <h3 class="modal-title">🎯 Secure Your Experience</h3>
+
+            <div id="bookingFormContainer">
+                <!-- Form sections rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Sticky Booking Bar -->
+    <div class="mobile-booking-bar" id="mobileBookingBar">
+        <div class="mobile-price">
+            <span id="mobilePriceDisplay"></span><br>
+            <small>All-inclusive</small>
+        </div>
+        <button class="btn btn-danger fw-bold rounded-pill px-4" onclick="openBookingForm()">
+            Reserve
+        </button>
+    </div>
+
+    <!-- Floating Book Button -->
+    <button class="floating-book-btn" onclick="openBookingForm()">
+        Book
+    </button>
+
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="footer-inner" style="text-align: center; padding: 30px 0; border-top: 1px solid var(--line);">
+                <div class="mb-2">
+                    <span class="fw-bold">© <span id="year"></span> <span class="footer-brand-name">Silver Cliff Resort</span></span>
+                </div>
+                <div class="small text-muted-soft">Khao Sok National Park, Thailand</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script src="./package-details.js"></script>
+    <script src="./site-settings.js"></script>
+</body>
+
+</html>

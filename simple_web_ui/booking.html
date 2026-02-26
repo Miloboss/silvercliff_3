@@ -92,7 +92,7 @@
                 <div class="col-12 col-lg-7" data-aos="fade-up">
                     <div class="glass-card p-4 p-md-5">
                         <form id="finalBookingForm">
-                            <h3 class="h5 fw-bold mb-4">1) Booking Details</h3>
+                            <h3 class="h5 fw-bold mb-4">Booking Details</h3>
 
                             <!-- Dynamic Fields Container -->
                             <div id="typeSpecificFields" class="mb-4">
@@ -127,6 +127,16 @@
                                             <label class="form-label-sm">Check-out</label>
                                             <input type="date" id="pkgCheckout" class="form-control form-dark">
                                         </div>
+                                    </div>
+                                    <!-- Selectable Options Container -->
+                                    <div id="packageOptionsContainer"
+                                        class="mt-3 p-3 bg-dark bg-opacity-25 rounded border border-secondary d-none">
+                                        <h4 class="h6 fw-bold mb-3 text-secondary">Select 2 Activities for Day 1</h4>
+                                        <div id="packageOptionsGrid" class="row g-2">
+                                            <!-- JS injects checkboxes -->
+                                        </div>
+                                        <div id="optionsValidation" class="small text-danger mt-2"
+                                            style="display:none;">Please select exactly 2 options.</div>
                                     </div>
                                 </div>
 
@@ -179,7 +189,7 @@
 
                             <hr class="my-4 border-secondary">
 
-                            <h3 class="h5 fw-bold mb-4">2) Contact Information</h3>
+                            <h3 class="h5 fw-bold mb-4">Contact Information</h3>
 
                             <div class="mb-3">
                                 <label class="form-label-sm">Full Name <span class="text-danger">*</span></label>

@@ -1,0 +1,31 @@
+﻿=== EMAIL RENDER PIPELINE TEST ===
+
+Template: Guest Booking Confirmation (v2)
+  header_title:   Booking Received
+  header_tagline: Thank you for choosing {site_name}!
+  accent_color:   #1e3a1a
+  body_intro:     Dear {guest_name},
+
+We have received your booking request an...
+
+Branding settings:
+  brand_name:          Khao Sok Silver Cliff
+  brand_primary_color: #152a10
+  brand_accent_color:  #C6A84B
+  logo_main:           simple_web_ui/logo.png
+  email_logo:          (empty)
+
+Using booking: SC-20260220-QZTI
+Placeholders resolved: 9 keys
+
+Render OK: 7574 bytes
+  Γ£ô header_title found in output
+  Γ£ô accent_color found in output
+  Γ£ù body_intro NOT found (expected: Dear {guest_name},
+
+We have re)
+  Γ£ô Logo img found: http://127.0.0.1:8000/simple_web_ui/logo.png
+
+Full HTML saved to test_email_output.html
+
+=== DONE ===

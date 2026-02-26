@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "key": "booking_confirmation_guest",
+        "header_title": "Booking Received",
+        "header_tagline": "Thank you for choosing {site_name}!",
+        "accent_color": "#1e3a1a"
+    },
+    {
+        "id": 2,
+        "key": "booking_confirmation_admin",
+        "header_title": "New Booking Alert",
+        "header_tagline": "A new booking has been submitted.",
+        "accent_color": "#1e3a1a"
+    },
+    {
+        "id": 3,
+        "key": "booking_status_updated",
+        "header_title": "Booking Update",
+        "header_tagline": "Your booking status has changed.",
+        "accent_color": "#1e3a1a"
+    }
+]

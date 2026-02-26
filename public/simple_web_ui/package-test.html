@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Navigation Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: block;
+            padding: 12px;
+            margin: 8px 0;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .test-link:hover {
+            background: #0056b3;
+        }
+        .error-link {
+            background: #dc3545;
+        }
+        .error-link:hover {
+            background: #c82333;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .success {
+            color: #28a745;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>📦 Package Navigation Test Page</h1>
+    <p>Use this page to verify package details navigation is working correctly.</p>
+
+    <div class="test-section">
+        <h2>✅ Valid Package Links</h2>
+        <p>These should open package details pages successfully:</p>
+        
+        <a href="/simple_web_ui/package-details.html?slug=the-complete-jungle-quest" class="test-link">
+            Package 1: The Complete Jungle Quest
+        </a>
+        
+        <a href="/simple_web_ui/package-details.html?slug=ultimate-jungle-experience" class="test-link">
+            Package 4: Ultimate Jungle Experience
+        </a>
+        
+        <a href="/simple_web_ui/package-details.html?slug=jungle-collection-122" class="test-link">
+            Package 5: Jungle Collection 122
+        </a>
+
+        <h3 style="margin-top: 30px;">Fallback ID Support</h3>
+        <p>These use numeric IDs instead of slugs (should still work):</p>
+        
+        <a href="/simple_web_ui/package-details.html?slug=1" class="test-link">
+            Package 1 by ID
+        </a>
+        
+        <a href="/simple_web_ui/package-details.html?slug=4" class="test-link">
+            Package 4 by ID
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>❌ Error Handling Test</h2>
+        <p>This should show "Package not found" error message:</p>
+        
+        <a href="/simple_web_ui/package-details.html?slug=invalid-package-name" class="test-link error-link">
+            Invalid Package Slug
+        </a>
+        
+        <a href="/simple_web_ui/package-details.html?slug=999" class="test-link error-link">
+            Non-existent Package ID
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>🏠 Main Page</h2>
+        <p>Go back to main page and click package cards:</p>
+        
+        <a href="/simple_web_ui/index.html#packages" class="test-link">
+            Main Page - Packages Section
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 API Test</h2>
+        <p>Test API endpoints directly:</p>
+        
+        <pre id="apiTest">Loading...</pre>
+        <button onclick="testApi()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Test API Endpoints
+        </button>
+    </div>
+
+    <script>
+        async function testApi() {
+            const results = [];
+            const testEl = document.getElementById('apiTest');
+            testEl.textContent = 'Testing...';
+
+            try {
+                // Test 1: List all packages
+                const list = await fetch('/api/packages');
+                const packages = await list.json();
+                results.push(`✅ GET /api/packages: ${packages.length} packages found`);
+                packages.forEach(p => {
+                    results.push(`   - ID ${p.id}: "${p.title}" → slug: "${p.slug}"`);
+                });
+
+                // Test 2: Get by slug
+                const bySlug = await fetch('/api/packages/the-complete-jungle-quest');
+                if (bySlug.ok) {
+                    const pkg = await bySlug.json();
+                    results.push(`\n✅ GET /api/packages/the-complete-jungle-quest: Found "${pkg.title}"`);
+                    results.push(`   - Has ${pkg.itineraries?.length || 0} itineraries`);
+                    results.push(`   - Has ${pkg.options?.length || 0} options`);
+                    results.push(`   - Has ${pkg.media?.length || 0} gallery media`);
+                } else {
+                    results.push(`\n❌ GET /api/packages/the-complete-jungle-quest: ${bySlug.status} ${bySlug.statusText}`);
+                }
+
+                // Test 3: Get by ID
+                const byId = await fetch('/api/packages/1');
+                if (byId.ok) {
+                    const pkg = await byId.json();
+                    results.push(`\n✅ GET /api/packages/1: Found "${pkg.title}"`);
+                } else {
+                    results.push(`\n❌ GET /api/packages/1: ${byId.status} ${byId.statusText}`);
+                }
+
+                // Test 4: Invalid slug
+                const invalid = await fetch('/api/packages/nonexistent-slug');
+                results.push(`\n${invalid.ok ? '❌' : '✅'} GET /api/packages/nonexistent-slug: ${invalid.status} ${invalid.statusText}`);
+
+            } catch (error) {
+                results.push(`\n❌ Error: ${error.message}`);
+            }
+
+            testEl.textContent = results.join('\n');
+        }
+
+        // Auto-run on load
+        testApi();
+    </script>
+
+    <div class="test-section">
+        <h2>📝 Expected Behavior</h2>
+        <ul>
+            <li>✅ Valid slug links should load package details page</li>
+            <li>✅ Hero section should show package title, subtitle, price</li>
+            <li>✅ Itinerary days should show actual content from database</li>
+            <li>✅ Activity options should show images if admin uploaded them</li>
+            <li>✅ Invalid slugs should show friendly error message</li>
+            <li>✅ Browser back button should work</li>
+            <li>✅ No console errors</li>
+        </ul>
+    </div>
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666;">
+        <p>Package Navigation Fix - February 26, 2026</p>
+    </footer>
+</body>
+</html>

@@ -54,4 +54,18 @@ class DashboardDateFilter extends Widget
         $this->until = now()->endOfMonth()->toDateString();
         $this->updated('from');
     }
+
+    public function setLastMonth()
+    {
+        $this->from = now()->subMonth()->startOfMonth()->toDateString();
+        $this->until = now()->subMonth()->endOfMonth()->toDateString();
+        $this->updated('from');
+    }
+
+    public function setThisYear()
+    {
+        $this->from = now()->startOfYear()->toDateString();
+        $this->until = now()->endOfYear()->toDateString();
+        $this->updated('from');
+    }
 }
